@@ -8,6 +8,9 @@ use winit::window::{Window, WindowBuilder};
 use vulkanalia::loader::{LibloadingLoader, LIBRARY};
 use vulkanalia::window as vk_window;
 use vulkanalia::prelude::v1_2::*;
+use vulkanalia::Version;
+
+const PORTABILITY_MACOS_VERSION: Version = Version::new(1, 3, 216);
 
 fn main() -> Result<()> {
     pretty_env_logger::init();
@@ -49,14 +52,27 @@ unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
         .engine_version(vk::make_version(1, 0, 0))
         .api_version(vk::make_version(1, 0, 0));
 
-    let extensions = vk_window::get_required_instance_extensions(window)
+    let mut extensions = vk_window::get_required_instance_extensions(window)
         .iter()
         .map(|ext| ext.as_ptr())
         .collect::<Vec<_>>();
 
+    let flags = if
+        cfg!(targer_os = "macos") &&
+        entry.version()? >= PORTABILITY_MACOS_VERSION
+    {
+        info!("Enabling extensions for macOS portability.");
+        extensions.push(vk::KHR_GET_PHYSICAL_DEVICE_PROPERTIES2_EXTENSION.name.as_ptr());
+        extensions.push(vk::KHR_PORTABILITY_ENUMERATION_EXTENSION.name.as_ptr());
+    vk::InstanceCreateFlags::ENUMERATE_PORTABILITY_KHR
+    } else {
+        vk::InstanceCreateFlags::empty()
+    };
+
     let instance_info = vk::InstanceCreateInfo::builder()
         .application_info(&app_info)
-        .enabled_extension_names(&extensions);
+        .enabled_extension_names(&extensions)
+        .flags(flags);
 
     Ok(entry.create_instance(&instance_info, None)?)
 }
