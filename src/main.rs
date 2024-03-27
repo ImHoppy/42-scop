@@ -1,5 +1,9 @@
 use anyhow::{anyhow, Result};
 use log::*;
+use std::collections::HashSet;
+use std::ffi::CStr;
+use std::os::raw::c_void;
+
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -9,8 +13,15 @@ use vulkanalia::loader::{LibloadingLoader, LIBRARY};
 use vulkanalia::window as vk_window;
 use vulkanalia::prelude::v1_2::*;
 use vulkanalia::Version;
+use vulkanalia::vk::ExtDebugUtilsExtension;
 
 const PORTABILITY_MACOS_VERSION: Version = Version::new(1, 3, 216);
+
+const VALIDATION_ENABLED: bool =
+    cfg!(debug_assertions);
+
+const VALIDATION_LAYER: vk::ExtensionName =
+    vk::ExtensionName::from_bytes(b"VK_LAYER_KHRONOS_validation");
 
 fn main() -> Result<()> {
     pretty_env_logger::init();
@@ -69,10 +80,26 @@ unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
         vk::InstanceCreateFlags::empty()
     };
 
+    let available_layers = entry.enumerate_instance_layer_properties()?
+        .iter()
+        .map(|layer| layer.layer_name)
+        .collect::<HashSet<_>>();
+
+    if VALIDATION_ENABLED && !available_layers.contains(&VALIDATION_LAYER) {
+        return Err(anyhow!("Validation layer requested but not supported."));
+    }
+
+    let enabled_layer_names = if VALIDATION_ENABLED {
+        vec![VALIDATION_LAYER.as_ptr()]
+    } else {
+        Vec::new()
+    };
+
     let instance_info = vk::InstanceCreateInfo::builder()
         .application_info(&app_info)
         .enabled_extension_names(&extensions)
-        .flags(flags);
+        .flags(flags)
+        .enabled_layer_names(&enabled_layer_names);
 
     Ok(entry.create_instance(&instance_info, None)?)
 }
