@@ -1,8 +1,13 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use log::*;
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
+
+use vulkanalia::loader::{LibloadingLoader, LIBRARY};
+use vulkanalia::window as vk_window;
+use vulkanalia::prelude::v1_2::*;
 
 fn main() -> Result<()> {
     pretty_env_logger::init();
@@ -36,14 +41,43 @@ fn main() -> Result<()> {
     });
 }
 
+unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
+    let app_info = vk::ApplicationInfo::builder()
+        .application_name(b"scop\0")
+        .application_version(vk::make_version(1, 0, 0))
+        .engine_name(b"No Engine\0")
+        .engine_version(vk::make_version(1, 0, 0))
+        .api_version(vk::make_version(1, 0, 0));
+
+    let extensions = vk_window::get_required_instance_extensions(window)
+        .iter()
+        .map(|ext| ext.as_ptr())
+        .collect::<Vec<_>>();
+
+    let instance_info = vk::InstanceCreateInfo::builder()
+        .application_info(&app_info)
+        .enabled_extension_names(&extensions);
+
+    Ok(entry.create_instance(&instance_info, None)?)
+}
+
 /// Our Vulkan app.
 #[derive(Clone, Debug)]
-struct App {}
+struct App {
+    entry: Entry,
+    instance: Instance,
+}
 
 impl App {
     /// Creates our Vulkan app.
     unsafe fn create(window: &Window) -> Result<Self> {
-        Ok(Self {})
+        let loader = LibloadingLoader::new(LIBRARY)?;
+        let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
+        let instance = create_instance(window, &entry)?;
+        Ok(Self {
+            entry,
+            instance,
+        })
     }
 
     /// Renders a frame for our Vulkan app.
@@ -52,7 +86,9 @@ impl App {
     }
 
     /// Destroys our Vulkan app.
-    unsafe fn destroy(&mut self) {}
+    unsafe fn destroy(&mut self) {
+        self.instance.destroy_instance(None);
+    }
 }
 
 /// The Vulkan handles and associated properties used by our Vulkan app.
