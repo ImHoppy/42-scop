@@ -1,3 +1,4 @@
+use thiserror::Error;
 use anyhow::{anyhow, Result};
 use log::*;
 use std::collections::HashSet;
@@ -73,6 +74,7 @@ impl App {
         let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
         let mut data = AppData::default();
         let instance = create_instance(window, &entry, &mut data)?;
+        pick_physical_device(&instance, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -99,6 +101,7 @@ impl App {
 #[derive(Clone, Debug, Default)]
 struct AppData {
     messenger: vk::DebugUtilsMessengerEXT,
+    physical_device: vk::PhysicalDevice,
 }
 
 /// Creates a Vulkan instance.
@@ -196,4 +199,58 @@ extern "system" fn debug_callback(
     }
 
     vk::FALSE
+}
+
+/// Picks a physical device.
+
+#[derive(Debug, Error)]
+#[error("{0}")]
+pub struct SuitabilityError(pub &'static str);
+
+unsafe fn pick_physical_device(instance: &Instance, data: &mut AppData) -> Result<()> {
+    for physical_device in instance.enumerate_physical_devices()? {
+        let properties = instance.get_physical_device_properties(physical_device);
+
+        if let Err(error) = check_physical_device(instance, data, physical_device) {
+            warn!("Skipping physical device (`{}`): {}", properties.device_name, error);
+        } else {
+            info!("Selected physical device (`{}`).", properties.device_name);
+            data.physical_device = physical_device;
+            return Ok(());
+        }
+    }
+
+    Err(anyhow!("Failed to find suitable physical device."))
+}
+
+
+unsafe fn check_physical_device(
+    instance: &Instance,
+    data: &AppData,
+    physical_device: vk::PhysicalDevice,
+) -> Result<()> {
+    QueueFamilyIndices::get(instance, data, physical_device)?;
+    Ok(())
+}
+
+#[derive(Copy, Clone, Debug)]
+struct QueueFamilyIndices {
+    graphics: u32,
+}
+
+impl QueueFamilyIndices {
+    unsafe fn get(instance: &Instance, data: &AppData, physical_device: vk::PhysicalDevice) -> Result<Self> {
+        let properties = instance.get_physical_device_queue_family_properties(physical_device);
+
+        let graphics = properties
+            .iter()
+            .position(|p| p.queue_flags.contains(vk::QueueFlags::GRAPHICS))
+            .map(|i| i as u32);
+
+        if let Some(graphics) = graphics {
+            Ok(Self { graphics })
+        } else {
+            Err(anyhow!(SuitabilityError("Missing required queue families.")))
+        }
+    }
 }
