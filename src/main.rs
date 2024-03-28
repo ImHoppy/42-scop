@@ -55,6 +55,41 @@ fn main() -> Result<()> {
     });
 }
 
+/// Our Vulkan app.
+#[derive(Clone, Debug)]
+struct App {
+    entry: Entry,
+    instance: Instance,
+}
+
+impl App {
+    /// Creates our Vulkan app.
+    unsafe fn create(window: &Window) -> Result<Self> {
+        let loader = LibloadingLoader::new(LIBRARY)?;
+        let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
+        let instance = create_instance(window, &entry)?;
+        Ok(Self {
+            entry,
+            instance,
+        })
+    }
+
+    /// Renders a frame for our Vulkan app.
+    unsafe fn render(&mut self, window: &Window) -> Result<()> {
+        Ok(())
+    }
+
+    /// Destroys our Vulkan app.
+    unsafe fn destroy(&mut self) {
+        self.instance.destroy_instance(None);
+    }
+}
+
+/// The Vulkan handles and associated properties used by our Vulkan app.
+#[derive(Clone, Debug, Default)]
+struct AppData {}
+
+/// Creates a Vulkan instance.
 unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
     let app_info = vk::ApplicationInfo::builder()
         .application_name(b"scop\0")
@@ -103,37 +138,3 @@ unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
 
     Ok(entry.create_instance(&instance_info, None)?)
 }
-
-/// Our Vulkan app.
-#[derive(Clone, Debug)]
-struct App {
-    entry: Entry,
-    instance: Instance,
-}
-
-impl App {
-    /// Creates our Vulkan app.
-    unsafe fn create(window: &Window) -> Result<Self> {
-        let loader = LibloadingLoader::new(LIBRARY)?;
-        let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
-        let instance = create_instance(window, &entry)?;
-        Ok(Self {
-            entry,
-            instance,
-        })
-    }
-
-    /// Renders a frame for our Vulkan app.
-    unsafe fn render(&mut self, window: &Window) -> Result<()> {
-        Ok(())
-    }
-
-    /// Destroys our Vulkan app.
-    unsafe fn destroy(&mut self) {
-        self.instance.destroy_instance(None);
-    }
-}
-
-/// The Vulkan handles and associated properties used by our Vulkan app.
-#[derive(Clone, Debug, Default)]
-struct AppData {}
