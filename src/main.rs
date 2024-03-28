@@ -60,6 +60,7 @@ fn main() -> Result<()> {
 struct App {
     entry: Entry,
     instance: Instance,
+    data: AppData,
 }
 
 impl App {
@@ -67,10 +68,12 @@ impl App {
     unsafe fn create(window: &Window) -> Result<Self> {
         let loader = LibloadingLoader::new(LIBRARY)?;
         let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
-        let instance = create_instance(window, &entry)?;
+        let mut data = AppData::default();
+        let instance = create_instance(window, &entry, &mut data)?;
         Ok(Self {
             entry,
             instance,
+            data
         })
     }
 
@@ -81,16 +84,25 @@ impl App {
 
     /// Destroys our Vulkan app.
     unsafe fn destroy(&mut self) {
+        if VALIDATION_ENABLED {
+            self.instance.destroy_debug_utils_messenger_ext(self.data.messenger, None);
+        }
         self.instance.destroy_instance(None);
     }
 }
 
 /// The Vulkan handles and associated properties used by our Vulkan app.
 #[derive(Clone, Debug, Default)]
-struct AppData {}
+struct AppData {
+    messenger: vk::DebugUtilsMessengerEXT,
+}
 
 /// Creates a Vulkan instance.
-unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
+unsafe fn create_instance(
+    window: &Window,
+    entry: &Entry,
+    data: &mut AppData
+) -> Result<Instance> {
     let app_info = vk::ApplicationInfo::builder()
         .application_name(b"scop\0")
         .application_version(vk::make_version(1, 0, 0))
@@ -102,6 +114,10 @@ unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
         .iter()
         .map(|ext| ext.as_ptr())
         .collect::<Vec<_>>();
+
+    if VALIDATION_ENABLED {
+        extensions.push(vk::EXT_DEBUG_UTILS_EXTENSION.name.as_ptr());
+    }
 
     let flags = if
         cfg!(targer_os = "macos") &&
@@ -130,11 +146,48 @@ unsafe fn create_instance(window: &Window, entry: &Entry) -> Result<Instance> {
         Vec::new()
     };
 
-    let instance_info = vk::InstanceCreateInfo::builder()
+    let mut instance_info = vk::InstanceCreateInfo::builder()
         .application_info(&app_info)
         .enabled_extension_names(&extensions)
         .flags(flags)
         .enabled_layer_names(&enabled_layer_names);
 
-    Ok(entry.create_instance(&instance_info, None)?)
+    let mut debug_info = vk::DebugUtilsMessengerCreateInfoEXT::builder()
+        .message_severity(vk::DebugUtilsMessageSeverityFlagsEXT::all())
+        .message_type(vk::DebugUtilsMessageTypeFlagsEXT::GENERAL | vk::DebugUtilsMessageTypeFlagsEXT::VALIDATION | vk::DebugUtilsMessageTypeFlagsEXT::PERFORMANCE) // Can't use all() because it might include additional extensions (EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION)
+        .user_callback(Some(debug_callback));
+
+    if VALIDATION_ENABLED {
+        instance_info = instance_info.push_next(&mut debug_info);
+    }
+
+    let instance = entry.create_instance(&instance_info, None)?;
+
+    if VALIDATION_ENABLED {
+        data.messenger = instance.create_debug_utils_messenger_ext(&debug_info, None)?;
+    }
+
+    Ok(instance)
+}
+
+extern "system" fn debug_callback(
+    severity: vk::DebugUtilsMessageSeverityFlagsEXT,
+    type_: vk::DebugUtilsMessageTypeFlagsEXT,
+    data: *const vk::DebugUtilsMessengerCallbackDataEXT,
+    _: *mut c_void,
+) -> vk::Bool32 {
+    let data = unsafe { *data };
+    let message = unsafe { CStr::from_ptr(data.message) }.to_string_lossy();
+
+    if severity >= vk::DebugUtilsMessageSeverityFlagsEXT::ERROR {
+        error!("({:?}) {}", type_, message);
+    } else if severity >= vk::DebugUtilsMessageSeverityFlagsEXT::WARNING {
+        warn!("({:?}) {}", type_, message);
+    } else if severity >= vk::DebugUtilsMessageSeverityFlagsEXT::INFO {
+        debug!("({:?}) {}", type_, message);
+    } else {
+        trace!("({:?}) {}", type_, message);
+    }
+
+    vk::FALSE
 }
