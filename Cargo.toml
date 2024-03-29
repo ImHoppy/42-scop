@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 log = "0.4"
-pretty_env_logger = "0.4"
+pretty_env_logger = "0.5"
 thiserror = "1"
 cgmath = "0.18"
-vulkanalia = { version = "0.22.0", features = ["libloading", "provisional", "window"] }
-winit = "0.28"
+vulkanalia = { version = "0.23.0", features = ["libloading", "provisional", "window"] }
+winit = "0.29"

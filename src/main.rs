@@ -10,15 +10,15 @@ use thiserror::Error;
 
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoop};
+use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
 use vulkanalia::loader::{LibloadingLoader, LIBRARY};
 use vulkanalia::prelude::v1_2::*;
 use vulkanalia::vk::ExtDebugUtilsExtension;
+use vulkanalia::vk::KhrSurfaceExtension;
 use vulkanalia::window as vk_window;
 use vulkanalia::Version;
-use vulkanalia::vk::KhrSurfaceExtension;
 
 pub const PORTABILITY_MACOS_VERSION: Version = Version::new(1, 3, 216);
 
@@ -32,7 +32,7 @@ fn main() -> Result<()> {
 
     // Window
 
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::new()?;
     let window = WindowBuilder::new()
         .with_title("scop")
         .with_inner_size(LogicalSize::new(1024, 768))
@@ -41,26 +41,29 @@ fn main() -> Result<()> {
     // App
 
     let mut app = unsafe { App::create(&window)? };
-    let mut destroying = false;
-    event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Poll;
+    event_loop.run(move |event, elwt| {
         match event {
-            // Render a frame if our Vulkan app is not being destroyed.
-            Event::MainEventsCleared if !destroying => unsafe { app.render(&window) }.unwrap(),
-            // Destroy our Vulkan app.
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                destroying = true;
-                *control_flow = ControlFlow::Exit;
-                unsafe {
-                    app.destroy();
+            // Request a redraw when all events were processed.
+            Event::AboutToWait => window.request_redraw(),
+            Event::WindowEvent { event, .. } => match event {
+                // Render a frame if our Vulkan app is not being destroyed.
+                WindowEvent::RedrawRequested if !elwt.exiting() => {
+                    unsafe { app.render(&window) }.unwrap()
                 }
-            }
+                // Destroy our Vulkan app.
+                WindowEvent::CloseRequested => {
+                    elwt.exit();
+                    unsafe {
+                        app.destroy();
+                    }
+                }
+                _ => {}
+            },
             _ => {}
         }
-    });
+    })?;
+
+    Ok(())
 }
 
 /// Our Vulkan app.
