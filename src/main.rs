@@ -18,6 +18,7 @@ use vulkanalia::prelude::v1_2::*;
 use vulkanalia::vk::ExtDebugUtilsExtension;
 use vulkanalia::window as vk_window;
 use vulkanalia::Version;
+use vulkanalia::vk::KhrSurfaceExtension;
 
 pub const PORTABILITY_MACOS_VERSION: Version = Version::new(1, 3, 216);
 
@@ -78,6 +79,7 @@ impl App {
         let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
         let mut data = AppData::default();
         let instance = create_instance(window, &entry, &mut data)?;
+        data.surface = vk_window::create_surface(&instance, &window, &window)?;
         pick_physical_device(&instance, &mut data)?;
         let device = create_logical_device(&entry, &instance, &mut data)?;
         Ok(Self {
@@ -100,6 +102,7 @@ impl App {
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
         self.device.destroy_device(None);
+        self.instance.destroy_surface_khr(self.data.surface, None);
         self.instance.destroy_instance(None);
     }
 }
@@ -110,6 +113,8 @@ pub struct AppData {
     messenger: vk::DebugUtilsMessengerEXT,
     physical_device: vk::PhysicalDevice,
     graphics_queue: vk::Queue,
+    surface: vk::SurfaceKHR,
+    present_queue: vk::Queue,
 }
 
 /// Creates a Vulkan instance.
@@ -179,6 +184,7 @@ unsafe fn create_instance(window: &Window, entry: &Entry, data: &mut AppData) ->
     }
 
     let instance = entry.create_instance(&instance_info, None)?;
+    data.surface = vk_window::create_surface(&instance, &window, &window)?;
 
     if VALIDATION_ENABLED {
         data.messenger = instance.create_debug_utils_messenger_ext(&debug_info, None)?;

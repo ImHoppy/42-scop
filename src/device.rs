@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use log::*;
 use thiserror::Error;
 
-use vulkanalia::prelude::v1_2::*;
+use vulkanalia::{prelude::v1_2::*, vk::KhrSurfaceExtension};
 
 use crate::{AppData, PORTABILITY_MACOS_VERSION, VALIDATION_ENABLED, VALIDATION_LAYER};
 
@@ -18,10 +18,19 @@ pub unsafe fn create_logical_device(
 ) -> Result<Device> {
     let indices = QueueFamilyIndices::get(instance, data, data.physical_device)?;
 
+    let mut unique_indices = std::collections::HashSet::new();
+    unique_indices.insert(indices.graphics);
+    unique_indices.insert(indices.present);
+
     let queue_priorities = &[1.0];
-    let queue_infos = [vk::DeviceQueueCreateInfo::builder()
-        .queue_family_index(indices.graphics)
-        .queue_priorities(queue_priorities)];
+    let queue_infos = unique_indices
+        .iter()
+        .map(|&index| {
+            vk::DeviceQueueCreateInfo::builder()
+                .queue_family_index(index)
+                .queue_priorities(queue_priorities)
+        })
+        .collect::<Vec<_>>();
 
     let layers = if VALIDATION_ENABLED {
         vec![VALIDATION_LAYER.as_ptr()]
@@ -45,7 +54,8 @@ pub unsafe fn create_logical_device(
         .enabled_features(&features);
 
     let device = instance.create_device(data.physical_device, &device_info, None)?;
-	data.graphics_queue = device.get_device_queue(indices.graphics, 0);
+    data.graphics_queue = device.get_device_queue(indices.graphics, 0);
+    data.present_queue = device.get_device_queue(indices.present, 0);
 
     Ok(device)
 }
@@ -114,6 +124,7 @@ unsafe fn check_physical_device(
 #[derive(Copy, Clone, Debug)]
 struct QueueFamilyIndices {
     graphics: u32,
+    present: u32,
 }
 
 impl QueueFamilyIndices {
@@ -127,10 +138,22 @@ impl QueueFamilyIndices {
         let graphics = properties
             .iter()
             .position(|p| p.queue_flags.contains(vk::QueueFlags::GRAPHICS))
-            .map(|i| i as u32);
+            .map(|index| index as u32);
 
-        if let Some(graphics) = graphics {
-            Ok(Self { graphics })
+        let mut present = None;
+        for (index, _) in properties.iter().enumerate() {
+            if instance.get_physical_device_surface_support_khr(
+                physical_device,
+                index as u32,
+                data.surface,
+            )? {
+                present = Some(index as u32);
+                break;
+            }
+        }
+
+        if let (Some(graphics), Some(present)) = (graphics, present) {
+            Ok(Self { graphics, present })
         } else {
             Err(anyhow!(SuitabilityError(
                 "Missing required queue families."
