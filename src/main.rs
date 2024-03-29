@@ -1,4 +1,8 @@
+mod device;
+
+
 use anyhow::{anyhow, Result};
+use device::{pick_physical_device};
 use log::*;
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -16,11 +20,11 @@ use vulkanalia::vk::ExtDebugUtilsExtension;
 use vulkanalia::window as vk_window;
 use vulkanalia::Version;
 
-const PORTABILITY_MACOS_VERSION: Version = Version::new(1, 3, 216);
+pub const PORTABILITY_MACOS_VERSION: Version = Version::new(1, 3, 216);
 
-const VALIDATION_ENABLED: bool = cfg!(debug_assertions);
+pub const VALIDATION_ENABLED: bool = cfg!(debug_assertions);
 
-const VALIDATION_LAYER: vk::ExtensionName =
+pub const VALIDATION_LAYER: vk::ExtensionName =
     vk::ExtensionName::from_bytes(b"VK_LAYER_KHRONOS_validation");
 
 fn main() -> Result<()> {
@@ -61,7 +65,7 @@ fn main() -> Result<()> {
 
 /// Our Vulkan app.
 #[derive(Clone, Debug)]
-struct App {
+pub struct App {
     entry: Entry,
     instance: Instance,
     data: AppData,
@@ -99,7 +103,7 @@ impl App {
 
 /// The Vulkan handles and associated properties used by our Vulkan app.
 #[derive(Clone, Debug, Default)]
-struct AppData {
+pub struct AppData {
     messenger: vk::DebugUtilsMessengerEXT,
     physical_device: vk::PhysicalDevice,
 }
@@ -199,98 +203,4 @@ extern "system" fn debug_callback(
     }
 
     vk::FALSE
-}
-
-/// Picks a physical device.
-
-#[derive(Debug, Error)]
-#[error("{0}")]
-pub struct SuitabilityError(pub &'static str);
-
-unsafe fn pick_physical_device(instance: &Instance, data: &mut AppData) -> Result<()> {
-    let mut best_score = 0;
-    let mut best_physical_device = None;
-
-    for physical_device in instance.enumerate_physical_devices()? {
-        let properties = instance.get_physical_device_properties(physical_device);
-
-        if let Err(error) = check_physical_device(instance, data, physical_device) {
-            warn!(
-                "Skipping physical device (`{}`): {}",
-                properties.device_name, error
-            );
-        } else {
-            info!(
-                "Found physical device (`{}`) with device type: {:?}",
-                properties.device_name, properties.device_type
-            );
-            let score = calculate_physical_device_score(&properties);
-            if score > best_score {
-                best_score = score;
-                best_physical_device = Some(physical_device);
-            }
-        }
-    }
-
-    if let Some(physical_device) = best_physical_device {
-        let properties = instance.get_physical_device_properties(physical_device);
-        info!(
-            "Selected physical device (`{}`) with device type: {:?} with score: {}",
-            properties.device_name, properties.device_type, best_score
-        );
-        data.physical_device = physical_device;
-        Ok(())
-    } else {
-        Err(anyhow!("Failed to find suitable physical device."))
-    }
-}
-
-fn calculate_physical_device_score(properties: &vk::PhysicalDeviceProperties) -> u32 {
-    let mut score = 0;
-
-    match properties.device_type {
-        vk::PhysicalDeviceType::DISCRETE_GPU => score += 5,
-        vk::PhysicalDeviceType::INTEGRATED_GPU => score += 2,
-        vk::PhysicalDeviceType::VIRTUAL_GPU => score += 1,
-        _ => (),
-    }
-
-    score
-}
-
-unsafe fn check_physical_device(
-    instance: &Instance,
-    data: &AppData,
-    physical_device: vk::PhysicalDevice,
-) -> Result<()> {
-    QueueFamilyIndices::get(instance, data, physical_device)?;
-    Ok(())
-}
-
-#[derive(Copy, Clone, Debug)]
-struct QueueFamilyIndices {
-    graphics: u32,
-}
-
-impl QueueFamilyIndices {
-    unsafe fn get(
-        instance: &Instance,
-        data: &AppData,
-        physical_device: vk::PhysicalDevice,
-    ) -> Result<Self> {
-        let properties = instance.get_physical_device_queue_family_properties(physical_device);
-
-        let graphics = properties
-            .iter()
-            .position(|p| p.queue_flags.contains(vk::QueueFlags::GRAPHICS))
-            .map(|i| i as u32);
-
-        if let Some(graphics) = graphics {
-            Ok(Self { graphics })
-        } else {
-            Err(anyhow!(SuitabilityError(
-                "Missing required queue families."
-            )))
-        }
-    }
 }
