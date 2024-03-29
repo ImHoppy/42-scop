@@ -2,7 +2,7 @@ mod device;
 
 
 use anyhow::{anyhow, Result};
-use device::{pick_physical_device};
+use device::{pick_physical_device, create_logical_device};
 use log::*;
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -69,6 +69,7 @@ pub struct App {
     entry: Entry,
     instance: Instance,
     data: AppData,
+    device: Device,
 }
 
 impl App {
@@ -79,10 +80,12 @@ impl App {
         let mut data = AppData::default();
         let instance = create_instance(window, &entry, &mut data)?;
         pick_physical_device(&instance, &mut data)?;
+        let device = create_logical_device(&entry, &instance, &mut data)?;
         Ok(Self {
             entry,
             instance,
             data,
+            device,
         })
     }
 
@@ -97,6 +100,7 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
+        self.device.destroy_device(None);
         self.instance.destroy_instance(None);
     }
 }
