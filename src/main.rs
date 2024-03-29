@@ -187,7 +187,6 @@ unsafe fn create_instance(window: &Window, entry: &Entry, data: &mut AppData) ->
     }
 
     let instance = entry.create_instance(&instance_info, None)?;
-    data.surface = vk_window::create_surface(&instance, &window, &window)?;
 
     if VALIDATION_ENABLED {
         data.messenger = instance.create_debug_utils_messenger_ext(&debug_info, None)?;
