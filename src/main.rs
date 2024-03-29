@@ -1,8 +1,7 @@
 mod device;
 
-
 use anyhow::{anyhow, Result};
-use device::{pick_physical_device, create_logical_device};
+use device::{create_logical_device, pick_physical_device};
 use log::*;
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -110,6 +109,7 @@ impl App {
 pub struct AppData {
     messenger: vk::DebugUtilsMessengerEXT,
     physical_device: vk::PhysicalDevice,
+    graphics_queue: vk::Queue,
 }
 
 /// Creates a Vulkan instance.

@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use vulkanalia::prelude::v1_2::*;
 
-use crate::{AppData, VALIDATION_ENABLED, VALIDATION_LAYER, PORTABILITY_MACOS_VERSION};
+use crate::{AppData, PORTABILITY_MACOS_VERSION, VALIDATION_ENABLED, VALIDATION_LAYER};
 
 #[derive(Debug, Error)]
 #[error("{0}")]
@@ -45,6 +45,7 @@ pub unsafe fn create_logical_device(
         .enabled_features(&features);
 
     let device = instance.create_device(data.physical_device, &device_info, None)?;
+	data.graphics_queue = device.get_device_queue(indices.graphics, 0);
 
     Ok(device)
 }
