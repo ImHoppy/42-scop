@@ -1,10 +1,15 @@
+use std::collections::HashSet;
+
 use anyhow::{anyhow, Result};
 use log::*;
 use thiserror::Error;
 
+use vulkanalia::vk::KhrSwapchainExtension;
 use vulkanalia::{prelude::v1_2::*, vk::KhrSurfaceExtension};
 
 use crate::{AppData, PORTABILITY_MACOS_VERSION, VALIDATION_ENABLED, VALIDATION_LAYER};
+
+const DEVICE_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
 #[derive(Debug, Error)]
 #[error("{0}")]
@@ -118,7 +123,30 @@ unsafe fn check_physical_device(
     physical_device: vk::PhysicalDevice,
 ) -> Result<()> {
     QueueFamilyIndices::get(instance, data, physical_device)?;
+    check_physical_device_extensions(instance, physical_device)?;
     Ok(())
+}
+
+unsafe fn check_physical_device_extensions(
+    instance: &Instance,
+    physical_device: vk::PhysicalDevice,
+) -> Result<()> {
+    let available_extensions = instance
+        .enumerate_device_extension_properties(physical_device, None)?
+        .iter()
+        .map(|extension| extension.extension_name)
+        .collect::<HashSet<_>>();
+
+    if DEVICE_EXTENSIONS
+        .iter()
+        .all(|ext| available_extensions.contains(ext))
+    {
+        Ok(())
+    } else {
+        Err(anyhow!(SuitabilityError(
+            "Missing required device extensions."
+        )))
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
