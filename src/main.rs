@@ -1,7 +1,7 @@
 mod device;
 
 use anyhow::{anyhow, Result};
-use device::{create_logical_device, pick_physical_device};
+use device::{create_logical_device, create_swapchain, pick_physical_device};
 use log::*;
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -15,8 +15,7 @@ use winit::window::{Window, WindowBuilder};
 
 use vulkanalia::loader::{LibloadingLoader, LIBRARY};
 use vulkanalia::prelude::v1_2::*;
-use vulkanalia::vk::ExtDebugUtilsExtension;
-use vulkanalia::vk::KhrSurfaceExtension;
+use vulkanalia::vk::{ExtDebugUtilsExtension, KhrSurfaceExtension, KhrSwapchainExtension};
 use vulkanalia::window as vk_window;
 use vulkanalia::Version;
 
@@ -85,6 +84,7 @@ impl App {
         data.surface = vk_window::create_surface(&instance, &window, &window)?;
         pick_physical_device(&instance, &mut data)?;
         let device = create_logical_device(&entry, &instance, &mut data)?;
+        create_swapchain(window, &instance, &device, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -104,6 +104,7 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
+        self.device.destroy_swapchain_khr(self.data.swapchain, None);
         self.device.destroy_device(None);
         self.instance.destroy_surface_khr(self.data.surface, None);
         self.instance.destroy_instance(None);
@@ -118,6 +119,10 @@ pub struct AppData {
     graphics_queue: vk::Queue,
     surface: vk::SurfaceKHR,
     present_queue: vk::Queue,
+    swapchain_format: vk::Format,
+    swapchain_extent: vk::Extent2D,
+    swapchain: vk::SwapchainKHR,
+    swapchain_images: Vec<vk::Image>,
 }
 
 /// Creates a Vulkan instance.
