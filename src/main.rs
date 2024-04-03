@@ -85,6 +85,7 @@ impl App {
         pick_physical_device(&instance, &mut data)?;
         let device = create_logical_device(&entry, &instance, &mut data)?;
         swapchain::create_swapchain(window, &instance, &device, &mut data)?;
+        swapchain::create_swapchain_image_views(&device, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -104,6 +105,10 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
+        self.data
+            .swapchain_images_views
+            .iter()
+            .for_each(|image_view| self.device.destroy_image_view(*image_view, None));
         self.device.destroy_swapchain_khr(self.data.swapchain, None);
         self.device.destroy_device(None);
         self.instance.destroy_surface_khr(self.data.surface, None);
@@ -123,6 +128,7 @@ pub struct AppData {
     swapchain_extent: vk::Extent2D,
     swapchain: vk::SwapchainKHR,
     swapchain_images: Vec<vk::Image>,
+    swapchain_images_views: Vec<vk::ImageView>,
 }
 
 /// Creates a Vulkan instance.

@@ -107,6 +107,37 @@ fn get_swapchain_extent(window: &Window, capabilities: vk::SurfaceCapabilitiesKH
     }
 }
 
+pub unsafe fn create_swapchain_image_views(device: &Device, data: &mut AppData) -> Result<()> {
+    let components = vk::ComponentMapping::builder()
+        .r(vk::ComponentSwizzle::IDENTITY)
+        .g(vk::ComponentSwizzle::IDENTITY)
+        .b(vk::ComponentSwizzle::IDENTITY)
+        .a(vk::ComponentSwizzle::IDENTITY);
+
+    let subresource_range = vk::ImageSubresourceRange::builder()
+        .aspect_mask(vk::ImageAspectFlags::COLOR)
+        .base_mip_level(0)
+        .level_count(1)
+        .base_array_layer(0)
+        .layer_count(1);
+
+    data.swapchain_images_views = data
+        .swapchain_images
+        .iter()
+        .map(|image| {
+            let create_info = vk::ImageViewCreateInfo::builder()
+                .image(*image)
+                .format(data.swapchain_format)
+                .view_type(vk::ImageViewType::_2D)
+                .components(components)
+                .subresource_range(subresource_range);
+
+            device.create_image_view(&create_info, None)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(())
+}
+
 #[derive(Clone, Debug)]
 pub struct SwapchainSupport {
     capabilities: vk::SurfaceCapabilitiesKHR,
