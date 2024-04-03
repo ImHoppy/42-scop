@@ -1,12 +1,12 @@
 mod device;
+mod swapchain;
 
 use anyhow::{anyhow, Result};
-use device::{create_logical_device, create_swapchain, pick_physical_device};
+use device::{create_logical_device, pick_physical_device};
 use log::*;
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::os::raw::c_void;
-use thiserror::Error;
 
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
@@ -84,7 +84,7 @@ impl App {
         data.surface = vk_window::create_surface(&instance, &window, &window)?;
         pick_physical_device(&instance, &mut data)?;
         let device = create_logical_device(&entry, &instance, &mut data)?;
-        create_swapchain(window, &instance, &device, &mut data)?;
+        swapchain::create_swapchain(window, &instance, &device, &mut data)?;
         Ok(Self {
             entry,
             instance,
