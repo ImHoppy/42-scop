@@ -108,7 +108,9 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
-        self.device.destroy_pipeline_layout(self.data.pipeline_layout, None);
+        self.device.destroy_pipeline(self.data.pipeline, None);
+        self.device
+            .destroy_pipeline_layout(self.data.pipeline_layout, None);
         self.device.destroy_render_pass(self.data.render_pass, None);
         self.data
             .swapchain_images_views
@@ -136,6 +138,7 @@ pub struct AppData {
     swapchain_images_views: Vec<vk::ImageView>,
     render_pass: vk::RenderPass,
     pipeline_layout: vk::PipelineLayout,
+    pipeline: vk::Pipeline,
 }
 
 /// Creates a Vulkan instance.
