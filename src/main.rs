@@ -1,4 +1,5 @@
 mod device;
+mod pipeline;
 mod swapchain;
 
 use anyhow::{anyhow, Result};
@@ -86,6 +87,8 @@ impl App {
         let device = create_logical_device(&entry, &instance, &mut data)?;
         swapchain::create_swapchain(window, &instance, &device, &mut data)?;
         swapchain::create_swapchain_image_views(&device, &mut data)?;
+        pipeline::create_render_pass(&instance, &device, &mut data)?;
+        pipeline::create(&device, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -105,6 +108,8 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
+        self.device.destroy_pipeline_layout(self.data.pipeline_layout, None);
+        self.device.destroy_render_pass(self.data.render_pass, None);
         self.data
             .swapchain_images_views
             .iter()
@@ -129,6 +134,8 @@ pub struct AppData {
     swapchain: vk::SwapchainKHR,
     swapchain_images: Vec<vk::Image>,
     swapchain_images_views: Vec<vk::ImageView>,
+    render_pass: vk::RenderPass,
+    pipeline_layout: vk::PipelineLayout,
 }
 
 /// Creates a Vulkan instance.
