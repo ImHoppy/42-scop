@@ -23,7 +23,7 @@ elif [[ ! $host == *"$suffix" ]]; then
     exit 1
 else
 	SOURCE_DIR=$HOME/goinfre/shaderc
-	BUILD_DIR=$HOME/goinfre/shaderc_build
+	BUILD_DIR=$HOME/sgoinfre/shaderc_build
 
 	if ! [ -d $BUILD_DIR ]; then
 		git clone https://github.com/google/shaderc $SOURCE_DIR
