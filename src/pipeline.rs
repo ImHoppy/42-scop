@@ -3,7 +3,8 @@ use anyhow::{Ok, Result};
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::prelude::v1_2::*;
 
-use crate::{AppData};
+use crate::device::QueueFamilyIndices;
+use crate::AppData;
 
 pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
     let vert = include_bytes!("../shaders_compiled/shader.vert.spv");
@@ -151,18 +152,34 @@ pub unsafe fn create_render_pass(
 }
 
 pub unsafe fn create_framebuffers(device: &Device, data: &mut AppData) -> Result<()> {
-data.framebuffers = data
-    .swapchain_images_views
-    .iter()
-    .map(|image_view| {
-        let attachments = [*image_view];
-        let framebuffer_info = vk::FramebufferCreateInfo::builder()
-            .render_pass(data.render_pass)
-            .attachments(&attachments)
-            .width(data.swapchain_extent.width)
-            .height(data.swapchain_extent.height)
-            .layers(1);
-        device.create_framebuffer(&framebuffer_info, None)
-    }).collect::<Result<Vec<_>, _>>()?;
-        Ok(())
+    data.framebuffers = data
+        .swapchain_images_views
+        .iter()
+        .map(|image_view| {
+            let attachments = [*image_view];
+            let framebuffer_info = vk::FramebufferCreateInfo::builder()
+                .render_pass(data.render_pass)
+                .attachments(&attachments)
+                .width(data.swapchain_extent.width)
+                .height(data.swapchain_extent.height)
+                .layers(1);
+            device.create_framebuffer(&framebuffer_info, None)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(())
+}
+
+pub unsafe fn create_command_pool(
+    instance: &Instance,
+    device: &Device,
+    data: &mut AppData,
+) -> Result<()> {
+    let indices = QueueFamilyIndices::get(instance, data, data.physical_device)?;
+
+    let pool_info = vk::CommandPoolCreateInfo::builder()
+        .flags(vk::CommandPoolCreateFlags::empty())
+        .queue_family_index(indices.graphics());
+
+    data.command_pool = device.create_command_pool(&pool_info, None)?;
+    Ok(())
 }
