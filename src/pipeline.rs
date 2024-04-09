@@ -3,7 +3,7 @@ use anyhow::{Ok, Result};
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::prelude::v1_2::*;
 
-use crate::AppData;
+use crate::{AppData};
 
 pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
     let vert = include_bytes!("../shaders_compiled/shader.vert.spv");
@@ -148,4 +148,21 @@ pub unsafe fn create_render_pass(
     data.render_pass = device.create_render_pass(&render_pass_info, None)?;
 
     Ok(())
+}
+
+pub unsafe fn create_framebuffers(device: &Device, data: &mut AppData) -> Result<()> {
+data.framebuffers = data
+    .swapchain_images_views
+    .iter()
+    .map(|image_view| {
+        let attachments = [*image_view];
+        let framebuffer_info = vk::FramebufferCreateInfo::builder()
+            .render_pass(data.render_pass)
+            .attachments(&attachments)
+            .width(data.swapchain_extent.width)
+            .height(data.swapchain_extent.height)
+            .layers(1);
+        device.create_framebuffer(&framebuffer_info, None)
+    }).collect::<Result<Vec<_>, _>>()?;
+        Ok(())
 }

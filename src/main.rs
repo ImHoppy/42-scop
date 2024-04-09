@@ -89,6 +89,7 @@ impl App {
         swapchain::create_swapchain_image_views(&device, &mut data)?;
         pipeline::create_render_pass(&instance, &device, &mut data)?;
         pipeline::create(&device, &mut data)?;
+        pipeline::create_framebuffers(&device, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -108,6 +109,10 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
+        self.data
+            .framebuffers
+            .iter()
+            .for_each(|framebuffer| self.device.destroy_framebuffer(*framebuffer, None));
         self.device.destroy_pipeline(self.data.pipeline, None);
         self.device
             .destroy_pipeline_layout(self.data.pipeline_layout, None);
@@ -139,6 +144,7 @@ pub struct AppData {
     render_pass: vk::RenderPass,
     pipeline_layout: vk::PipelineLayout,
     pipeline: vk::Pipeline,
+    framebuffers: Vec<vk::Framebuffer>,
 }
 
 /// Creates a Vulkan instance.
