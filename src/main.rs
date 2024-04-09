@@ -91,6 +91,7 @@ impl App {
         pipeline::create(&device, &mut data)?;
         pipeline::create_framebuffers(&device, &mut data)?;
         pipeline::create_command_pool(&instance, &device, &mut data)?;
+        pipeline::create_command_buffers(&device, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -110,6 +111,7 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
+        self.device.free_command_buffers(self.data.command_pool, &self.data.command_buffers);
         self.device.destroy_command_pool(self.data.command_pool, None);
         self.data
             .framebuffers
@@ -148,6 +150,7 @@ pub struct AppData {
     pipeline: vk::Pipeline,
     framebuffers: Vec<vk::Framebuffer>,
     command_pool: vk::CommandPool,
+    command_buffers: Vec<vk::CommandBuffer>,
 }
 
 /// Creates a Vulkan instance.

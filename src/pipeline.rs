@@ -183,3 +183,16 @@ pub unsafe fn create_command_pool(
     data.command_pool = device.create_command_pool(&pool_info, None)?;
     Ok(())
 }
+
+pub unsafe fn create_command_buffers(
+    device: &Device,
+    data: &mut AppData,
+) -> Result<()> {
+    let allocate_info = vk::CommandBufferAllocateInfo::builder()
+        .command_pool(data.command_pool)
+        .level(vk::CommandBufferLevel::PRIMARY)
+        .command_buffer_count(data.framebuffers.len() as u32);
+
+    data.command_buffers = device.allocate_command_buffers(&allocate_info)?;
+    Ok(())
+}
