@@ -1,6 +1,7 @@
 mod device;
 mod pipeline;
 mod swapchain;
+mod buffers;
 
 use anyhow::{anyhow, Result};
 use device::{create_logical_device, pick_physical_device};
@@ -89,9 +90,9 @@ impl App {
         swapchain::create_swapchain_image_views(&device, &mut data)?;
         pipeline::create_render_pass(&instance, &device, &mut data)?;
         pipeline::create(&device, &mut data)?;
-        pipeline::create_framebuffers(&device, &mut data)?;
-        pipeline::create_command_pool(&instance, &device, &mut data)?;
-        pipeline::create_command_buffers(&device, &mut data)?;
+        buffers::create_framebuffers(&device, &mut data)?;
+        buffers::create_command_pool(&instance, &device, &mut data)?;
+        buffers::create_command_buffers(&device, &mut data)?;
         Ok(Self {
             entry,
             instance,
