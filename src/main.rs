@@ -1,7 +1,7 @@
+mod buffers;
 mod device;
 mod pipeline;
 mod swapchain;
-mod buffers;
 
 use anyhow::{anyhow, Result};
 use device::{create_logical_device, pick_physical_device};
@@ -93,6 +93,7 @@ impl App {
         buffers::create_framebuffers(&device, &mut data)?;
         buffers::create_command_pool(&instance, &device, &mut data)?;
         buffers::create_command_buffers(&device, &mut data)?;
+        buffers::create_sync_objects(&device, &mut data)?;
         Ok(Self {
             entry,
             instance,
@@ -103,6 +104,27 @@ impl App {
 
     /// Renders a frame for our Vulkan app.
     unsafe fn render(&mut self, window: &Window) -> Result<()> {
+        let image_index = self
+            .device
+            .acquire_next_image_khr(
+                self.data.swapchain,
+                u64::MAX,
+                self.data.image_available_semaphore,
+                vk::Fence::null(),
+            )?
+            .0 as usize;
+
+        let wait_semaphores = [self.data.image_available_semaphore];
+        let wait_stages = [vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
+        let command_buffers = [self.data.command_buffers[image_index]];
+        let signal_semaphores = [self.data.render_finished_semaphore];
+        let submit_info = vk::SubmitInfo::builder()
+            .wait_semaphores(&wait_semaphores)
+            .wait_dst_stage_mask(&wait_stages)
+            .command_buffers(&command_buffers)
+            .signal_semaphores(&signal_semaphores);
+
+        self.device.queue_submit(self.data.graphics_queue, &[submit_info], vk::Fence::null())?;
         Ok(())
     }
 
@@ -112,8 +134,14 @@ impl App {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
         }
-        self.device.free_command_buffers(self.data.command_pool, &self.data.command_buffers);
-        self.device.destroy_command_pool(self.data.command_pool, None);
+        self.device
+            .destroy_semaphore(self.data.image_available_semaphore, None);
+        self.device
+            .destroy_semaphore(self.data.render_finished_semaphore, None);
+        self.device
+            .free_command_buffers(self.data.command_pool, &self.data.command_buffers);
+        self.device
+            .destroy_command_pool(self.data.command_pool, None);
         self.data
             .framebuffers
             .iter()
@@ -152,6 +180,8 @@ pub struct AppData {
     framebuffers: Vec<vk::Framebuffer>,
     command_pool: vk::CommandPool,
     command_buffers: Vec<vk::CommandBuffer>,
+    image_available_semaphore: vk::Semaphore,
+    render_finished_semaphore: vk::Semaphore,
 }
 
 /// Creates a Vulkan instance.
