@@ -124,12 +124,26 @@ impl App {
             .command_buffers(&command_buffers)
             .signal_semaphores(&signal_semaphores);
 
-        self.device.queue_submit(self.data.graphics_queue, &[submit_info], vk::Fence::null())?;
+        self.device
+            .queue_submit(self.data.graphics_queue, &[submit_info], vk::Fence::null())?;
+
+        let swapchains = [self.data.swapchain];
+        let image_indices = [image_index as u32];
+        let present_info = vk::PresentInfoKHR::builder()
+            .wait_semaphores(&signal_semaphores)
+            .swapchains(&swapchains)
+            .image_indices(&image_indices);
+
+        self.device
+            .queue_present_khr(self.data.present_queue, &present_info)?;
+
         Ok(())
     }
 
     /// Destroys our Vulkan app.
     unsafe fn destroy(&mut self) {
+        self.device.device_wait_idle().unwrap();
+
         if VALIDATION_ENABLED {
             self.instance
                 .destroy_debug_utils_messenger_ext(self.data.messenger, None);
@@ -157,6 +171,7 @@ impl App {
         self.device.destroy_swapchain_khr(self.data.swapchain, None);
         self.device.destroy_device(None);
         self.instance.destroy_surface_khr(self.data.surface, None);
+
         self.instance.destroy_instance(None);
     }
 }
