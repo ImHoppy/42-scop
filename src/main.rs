@@ -124,6 +124,16 @@ impl App {
             )?
             .0 as usize;
 
+        if !self.data.images_in_flight[image_index as usize].is_null() {
+            self.device.wait_for_fences(
+                &[self.data.images_in_flight[image_index as usize]],
+                true,
+                u64::MAX,
+            )?;
+        }
+
+        self.data.images_in_flight[image_index as usize] = self.data.in_flight_fences[self.frame];
+
         let wait_semaphores = [self.data.image_available_semaphores[self.frame]];
         let wait_stages = [vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
         let command_buffers = [self.data.command_buffers[image_index]];
