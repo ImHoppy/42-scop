@@ -179,21 +179,29 @@ impl App {
 /// The Vulkan handles and associated properties used by our Vulkan app.
 #[derive(Clone, Debug, Default)]
 pub struct AppData {
+    // Debug
     messenger: vk::DebugUtilsMessengerEXT,
+    // Surface
+    surface: vk::SurfaceKHR,
+    // Physical Device / Logical Device
     physical_device: vk::PhysicalDevice,
     graphics_queue: vk::Queue,
-    surface: vk::SurfaceKHR,
     present_queue: vk::Queue,
+    // Swapchain
     swapchain_format: vk::Format,
     swapchain_extent: vk::Extent2D,
     swapchain: vk::SwapchainKHR,
     swapchain_images: Vec<vk::Image>,
     swapchain_images_views: Vec<vk::ImageView>,
+    // Pipeline
     render_pass: vk::RenderPass,
     pipeline_layout: vk::PipelineLayout,
     pipeline: vk::Pipeline,
+    // Framebuffers
     framebuffers: Vec<vk::Framebuffer>,
+    // Command Pool
     command_pool: vk::CommandPool,
+    // Command Buffers
     command_buffers: Vec<vk::CommandBuffer>,
     image_available_semaphore: vk::Semaphore,
     render_finished_semaphore: vk::Semaphore,
