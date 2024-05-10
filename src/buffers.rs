@@ -3,7 +3,7 @@ use anyhow::{Ok, Result};
 use vulkanalia::prelude::v1_2::*;
 
 use crate::device::QueueFamilyIndices;
-use crate::AppData;
+use crate::{AppData, MAX_FRAMES_IN_FLIGHT};
 
 pub unsafe fn create_framebuffers(device: &Device, data: &mut AppData) -> Result<()> {
     data.framebuffers = data
@@ -68,7 +68,11 @@ pub unsafe fn create_command_buffers(device: &Device, data: &mut AppData) -> Res
             .clear_values(&clear_values);
 
         device.cmd_begin_render_pass(command_buffer, &info, vk::SubpassContents::INLINE);
-        device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, data.pipeline);
+        device.cmd_bind_pipeline(
+            command_buffer,
+            vk::PipelineBindPoint::GRAPHICS,
+            data.pipeline,
+        );
         device.cmd_draw(command_buffer, 3, 1, 0, 0);
         device.cmd_end_render_pass(command_buffer);
 
@@ -78,10 +82,24 @@ pub unsafe fn create_command_buffers(device: &Device, data: &mut AppData) -> Res
 }
 
 pub unsafe fn create_sync_objects(device: &Device, data: &mut AppData) -> Result<()> {
-	let semaphore_info = vk::SemaphoreCreateInfo::builder();
+    let semaphore_info = vk::SemaphoreCreateInfo::builder();
+    let fence_info = vk::FenceCreateInfo::builder().flags(vk::FenceCreateFlags::SIGNALED);
 
-	data.image_available_semaphore = device.create_semaphore(&semaphore_info, None)?;
-	data.render_finished_semaphore = device.create_semaphore(&semaphore_info, None)?;
+    for _ in 0..MAX_FRAMES_IN_FLIGHT {
+        data.image_available_semaphores
+            .push(device.create_semaphore(&semaphore_info, None)?);
+        data.render_finished_semaphores
+            .push(device.create_semaphore(&semaphore_info, None)?);
 
-	Ok(())
+        data.in_flight_fences
+            .push(device.create_fence(&fence_info, None)?);
+    }
+
+    data.images_in_flight = data
+        .swapchain_images
+        .iter()
+        .map(|_| vk::Fence::null())
+        .collect();
+
+    Ok(())
 }
