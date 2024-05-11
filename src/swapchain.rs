@@ -1,4 +1,6 @@
-use crate::AppData;
+use crate::buffers;
+use crate::pipeline;
+use crate::{App, AppData};
 
 use anyhow::{Ok, Result};
 use log::*;
@@ -8,6 +10,20 @@ use vulkanalia::{prelude::v1_2::*, vk::KhrSurfaceExtension};
 use winit::window::Window;
 
 use crate::device;
+
+impl App {
+    pub unsafe fn recreate_swapchain(&mut self, window: &Window) -> Result<()> {
+        self.device.device_wait_idle()?;
+        create_swapchain(window, &self.instance, &self.device, &mut self.data)?;
+        create_swapchain_image_views(&self.device, &mut self.data)?;
+        pipeline::create_render_pass(&self.instance, &self.device, &mut self.data)?;
+        pipeline::create(&self.device, &mut self.data)?;
+        buffers::create_framebuffers(&self.device, &mut self.data)?;
+        buffers::create_command_buffers(&self.device, &mut self.data)?;
+        self.data.images_in_flight.resize(self.data.swapchain_images.len(), vk::Fence::null());
+        Ok(())
+    }
+}
 
 pub unsafe fn create_swapchain(
     window: &Window,
