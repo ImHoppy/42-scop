@@ -169,10 +169,8 @@ impl App {
     unsafe fn destroy(&mut self) {
         self.device.device_wait_idle().unwrap();
 
-        if VALIDATION_ENABLED {
-            self.instance
-                .destroy_debug_utils_messenger_ext(self.data.messenger, None);
-        }
+        self.destroy_swapchain();
+
         self.data
             .in_flight_fences
             .iter()
@@ -186,24 +184,14 @@ impl App {
             .iter()
             .for_each(|s| self.device.destroy_semaphore(*s, None));
         self.device
-            .free_command_buffers(self.data.command_pool, &self.data.command_buffers);
-        self.device
             .destroy_command_pool(self.data.command_pool, None);
-        self.data
-            .framebuffers
-            .iter()
-            .for_each(|framebuffer| self.device.destroy_framebuffer(*framebuffer, None));
-        self.device.destroy_pipeline(self.data.pipeline, None);
-        self.device
-            .destroy_pipeline_layout(self.data.pipeline_layout, None);
-        self.device.destroy_render_pass(self.data.render_pass, None);
-        self.data
-            .swapchain_images_views
-            .iter()
-            .for_each(|image_view| self.device.destroy_image_view(*image_view, None));
-        self.device.destroy_swapchain_khr(self.data.swapchain, None);
         self.device.destroy_device(None);
         self.instance.destroy_surface_khr(self.data.surface, None);
+
+        if VALIDATION_ENABLED {
+            self.instance
+                .destroy_debug_utils_messenger_ext(self.data.messenger, None);
+        }
 
         self.instance.destroy_instance(None);
     }

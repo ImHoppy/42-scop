@@ -14,14 +14,37 @@ use crate::device;
 impl App {
     pub unsafe fn recreate_swapchain(&mut self, window: &Window) -> Result<()> {
         self.device.device_wait_idle()?;
+
+        self.destroy_swapchain();
+
         create_swapchain(window, &self.instance, &self.device, &mut self.data)?;
         create_swapchain_image_views(&self.device, &mut self.data)?;
         pipeline::create_render_pass(&self.instance, &self.device, &mut self.data)?;
         pipeline::create(&self.device, &mut self.data)?;
         buffers::create_framebuffers(&self.device, &mut self.data)?;
         buffers::create_command_buffers(&self.device, &mut self.data)?;
-        self.data.images_in_flight.resize(self.data.swapchain_images.len(), vk::Fence::null());
+        self.data
+            .images_in_flight
+            .resize(self.data.swapchain_images.len(), vk::Fence::null());
         Ok(())
+    }
+
+    pub unsafe fn destroy_swapchain(&mut self) {
+        self.device
+            .free_command_buffers(self.data.command_pool, &self.data.command_buffers);
+        self.data
+            .framebuffers
+            .iter()
+            .for_each(|framebuffer| self.device.destroy_framebuffer(*framebuffer, None));
+        self.device.destroy_pipeline(self.data.pipeline, None);
+        self.device
+            .destroy_pipeline_layout(self.data.pipeline_layout, None);
+        self.device.destroy_render_pass(self.data.render_pass, None);
+        self.data
+            .swapchain_images_views
+            .iter()
+            .for_each(|image_view| self.device.destroy_image_view(*image_view, None));
+        self.device.destroy_swapchain_khr(self.data.swapchain, None);
     }
 }
 
