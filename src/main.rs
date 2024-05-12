@@ -44,13 +44,14 @@ fn main() -> Result<()> {
     // App
 
     let mut app = unsafe { App::create(&window)? };
+    let mut minimized = false;
     event_loop.run(move |event, elwt| {
         match event {
             // Request a redraw when all events were processed.
             Event::AboutToWait => window.request_redraw(),
             Event::WindowEvent { event, .. } => match event {
                 // Render a frame if our Vulkan app is not being destroyed.
-                WindowEvent::RedrawRequested if !elwt.exiting() => {
+                WindowEvent::RedrawRequested if !elwt.exiting() && !minimized => {
                     unsafe { app.render(&window) }.unwrap()
                 }
                 // Destroy our Vulkan app.
@@ -58,6 +59,14 @@ fn main() -> Result<()> {
                     elwt.exit();
                     unsafe {
                         app.destroy();
+                    }
+                }
+                WindowEvent::Resized(size) => {
+                    if size.width == 0 || size.height == 0 {
+                        minimized = true;
+                    } else {
+                        minimized = false;
+                        app.resized = true;
                     }
                 }
                 _ => {}
@@ -77,6 +86,7 @@ pub struct App {
     data: AppData,
     device: Device,
     frame: usize,
+    resized: bool,
 }
 
 impl App {
@@ -103,26 +113,29 @@ impl App {
             data,
             device,
             frame: 0,
+            resized: false,
         })
     }
 
     /// Renders a frame for our Vulkan app.
     unsafe fn render(&mut self, window: &Window) -> Result<()> {
-        self.device
-            .wait_for_fences(&[self.data.in_flight_fences[self.frame]], true, u64::MAX)?;
+        let in_flight_fence = self.data.in_flight_fences[self.frame];
 
         self.device
-            .reset_fences(&[self.data.in_flight_fences[self.frame]])?;
+            .wait_for_fences(&[in_flight_fence], true, u64::MAX)?;
 
-        let image_index = self
-            .device
-            .acquire_next_image_khr(
-                self.data.swapchain,
-                u64::MAX,
-                self.data.image_available_semaphores[self.frame],
-                vk::Fence::null(),
-            )?
-            .0 as usize;
+        let result = self.device.acquire_next_image_khr(
+            self.data.swapchain,
+            u64::MAX,
+            self.data.image_available_semaphores[self.frame],
+            vk::Fence::null(),
+        );
+
+        let image_index = match result {
+            Ok((image_index, _)) => image_index as usize,
+            Err(vk::ErrorCode::OUT_OF_DATE_KHR) => return self.recreate_swapchain(window),
+            Err(error) => return Err(anyhow!("Failed to acquire next image: {}", error)),
+        };
 
         if !self.data.images_in_flight[image_index as usize].is_null() {
             self.device.wait_for_fences(
@@ -132,7 +145,7 @@ impl App {
             )?;
         }
 
-        self.data.images_in_flight[image_index as usize] = self.data.in_flight_fences[self.frame];
+        self.data.images_in_flight[image_index as usize] = in_flight_fence;
 
         let wait_semaphores = [self.data.image_available_semaphores[self.frame]];
         let wait_stages = [vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
@@ -144,11 +157,10 @@ impl App {
             .command_buffers(&command_buffers)
             .signal_semaphores(&signal_semaphores);
 
-        self.device.queue_submit(
-            self.data.graphics_queue,
-            &[submit_info],
-            self.data.in_flight_fences[self.frame],
-        )?;
+        self.device.reset_fences(&[in_flight_fence])?;
+
+        self.device
+            .queue_submit(self.data.graphics_queue, &[submit_info], in_flight_fence)?;
 
         let swapchains = [self.data.swapchain];
         let image_indices = [image_index as u32];
@@ -157,8 +169,18 @@ impl App {
             .swapchains(&swapchains)
             .image_indices(&image_indices);
 
-        self.device
-            .queue_present_khr(self.data.present_queue, &present_info)?;
+        let result = self
+            .device
+            .queue_present_khr(self.data.present_queue, &present_info);
+        let changed = result == Ok(vk::SuccessCode::SUBOPTIMAL_KHR)
+            || result == Err(vk::ErrorCode::OUT_OF_DATE_KHR);
+
+        if self.resized || changed {
+            self.resized = false;
+            self.recreate_swapchain(window)?;
+        } else if let Err(e) = result {
+            return Err(anyhow!("Failed to present queue: {}", e));
+        }
 
         self.frame = (self.frame + 1) % MAX_FRAMES_IN_FLIGHT;
 
