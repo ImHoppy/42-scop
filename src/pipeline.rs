@@ -4,6 +4,7 @@ use vulkanalia::bytecode::Bytecode;
 use vulkanalia::prelude::v1_2::*;
 
 use crate::AppData;
+use crate::vertex::Vertex;
 
 pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
     let vert = include_bytes!("../shaders_compiled/shader.vert.spv");
@@ -21,7 +22,11 @@ pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
         .module(frag_shader_module)
         .name(b"main\0");
 
-    let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::builder();
+    let binding_descriptions = &[Vertex::binding_description()];
+    let attribute_descriptions = Vertex::attribute_descriptions();
+    let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::builder()
+        .vertex_binding_descriptions(binding_descriptions)
+        .vertex_attribute_descriptions(&attribute_descriptions);
 
     //
 

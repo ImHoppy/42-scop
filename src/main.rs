@@ -2,6 +2,7 @@ mod buffers;
 mod device;
 mod pipeline;
 mod swapchain;
+mod vertex;
 
 use anyhow::{anyhow, Result};
 use device::{create_logical_device, pick_physical_device};
