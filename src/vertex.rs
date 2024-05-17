@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Ok, Result};
+use cgmath::{vec2, vec3};
 use vulkanalia::{prelude::v1_2::*, vk::Cast};
 
 use std::mem::size_of;
-
-use cgmath::{vec2, vec3};
+use std::ptr::copy_nonoverlapping as memcpy;
 
 use crate::AppData;
 
@@ -81,6 +81,16 @@ pub unsafe fn create_vertex_buffer(
     data.vertex_buffer_memory = device.allocate_memory(&allocate_info, None)?;
 
     device.bind_buffer_memory(data.vertex_buffer, data.vertex_buffer_memory, 0)?;
+
+    let memory = device.map_memory(
+        data.vertex_buffer_memory,
+        0,
+        buffer_info.size,
+        vk::MemoryMapFlags::empty(),
+    )?;
+
+    memcpy(VERTICES.as_ptr(), memory.cast(), VERTICES.len());
+    device.unmap_memory(data.vertex_buffer_memory);
 
     Ok(())
 }
