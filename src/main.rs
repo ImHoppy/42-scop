@@ -106,6 +106,7 @@ impl App {
         pipeline::create(&device, &mut data)?;
         buffers::create_framebuffers(&device, &mut data)?;
         buffers::create_command_pool(&instance, &device, &mut data)?;
+        vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         buffers::create_command_buffers(&device, &mut data)?;
         buffers::create_sync_objects(&device, &mut data)?;
         Ok(Self {
@@ -193,7 +194,9 @@ impl App {
         self.device.device_wait_idle().unwrap();
 
         self.destroy_swapchain();
-
+        self.device.destroy_buffer(self.data.vertex_buffer, None);
+        self.device
+            .free_memory(self.data.vertex_buffer_memory, None);
         self.data
             .in_flight_fences
             .iter()
@@ -252,6 +255,9 @@ pub struct AppData {
     render_finished_semaphores: Vec<vk::Semaphore>,
     in_flight_fences: Vec<vk::Fence>,
     images_in_flight: Vec<vk::Fence>,
+    // Vertex Buffer
+    vertex_buffer: vk::Buffer,
+    vertex_buffer_memory: vk::DeviceMemory,
 }
 
 /// Creates a Vulkan instance.
