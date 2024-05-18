@@ -25,14 +25,14 @@ else
 	SOURCE_DIR=$HOME/goinfre/shaderc
 	BUILD_DIR=$HOME/sgoinfre/shaderc_build
 
-	if ! [ -d $BUILD_DIR ]; then
-		git clone https://github.com/google/shaderc $SOURCE_DIR
-		cd $SOURCE_DIR
+	if ! [ -d "$BUILD_DIR" ]; then
+		git clone https://github.com/google/shaderc "$SOURCE_DIR"
+		cd "$SOURCE_DIR"
 		./utils/git-sync-deps
 
-		mkdir -p $BUILD_DIR
-		cd $BUILD_DIR
-		cmake -GNinja -DCMAKE_BUILD_TYPE=Release $SOURCE_DIR
+		mkdir -p "$BUILD_DIR"
+		cd "$BUILD_DIR"
+		cmake -GNinja -DCMAKE_BUILD_TYPE=Release "$SOURCE_DIR"
 		ninja
 		# ctest # optional
 	fi
