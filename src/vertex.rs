@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Ok, Result};
 use cgmath::{vec2, vec3};
-use vulkanalia::{prelude::v1_2::*, vk::Cast};
+use vulkanalia::prelude::v1_2::*;
 
 use std::mem::size_of;
 use std::ptr::copy_nonoverlapping as memcpy;

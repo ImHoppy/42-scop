@@ -1,11 +1,9 @@
-use std::mem::size_of;
-
 use anyhow::{Ok, Result};
 
 use vulkanalia::prelude::v1_2::*;
 
 use crate::device::QueueFamilyIndices;
-use crate::vertex::{get_memory_type_index, Vertex, VERTICES};
+use crate::vertex::{get_memory_type_index, VERTICES};
 use crate::{AppData, MAX_FRAMES_IN_FLIGHT};
 
 pub unsafe fn create_framebuffers(device: &Device, data: &mut AppData) -> Result<()> {
@@ -122,8 +120,8 @@ pub unsafe fn create_buffer(
     properties: vk::MemoryPropertyFlags,
 ) -> Result<(vk::Buffer, vk::DeviceMemory)> {
     let buffer_info = vk::BufferCreateInfo::builder()
-        .size((size_of::<Vertex>() * VERTICES.len()) as u64)
-        .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
+        .size(size)
+        .usage(usage)
         .sharing_mode(vk::SharingMode::EXCLUSIVE);
 
     let buffer = device.create_buffer(&buffer_info, None)?;
