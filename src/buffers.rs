@@ -140,3 +140,41 @@ pub unsafe fn create_buffer(
 
     Ok((buffer, buffer_memory))
 }
+
+pub unsafe fn copy_buffer(
+    device: &Device,
+    data: &AppData,
+    source: vk::Buffer,
+    destination: vk::Buffer,
+    size: vk::DeviceSize,
+) -> Result<()> {
+    let allocate_info = vk::CommandBufferAllocateInfo::builder()
+        .level(vk::CommandBufferLevel::PRIMARY)
+        .command_pool(data.command_pool)
+        .command_buffer_count(1);
+
+    let command_buffer = device.allocate_command_buffers(&allocate_info)?[0];
+
+    let begin_info =
+        vk::CommandBufferBeginInfo::builder().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
+
+    device.begin_command_buffer(command_buffer, &begin_info)?;
+
+    let copy_region = vk::BufferCopy::builder()
+        .src_offset(0)
+        .dst_offset(0)
+        .size(size);
+    device.cmd_copy_buffer(command_buffer, source, destination, &[copy_region]);
+
+    device.end_command_buffer(command_buffer)?;
+
+    let command_buffers = [command_buffer];
+    let submit_info = vk::SubmitInfo::builder().command_buffers(&command_buffers);
+
+    device.queue_submit(data.graphics_queue, &[submit_info], vk::Fence::null())?;
+    device.queue_wait_idle(data.graphics_queue)?;
+
+    device.free_command_buffers(data.command_pool, &command_buffers);
+
+    Ok(())
+}

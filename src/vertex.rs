@@ -5,7 +5,7 @@ use vulkanalia::prelude::v1_2::*;
 use std::mem::size_of;
 use std::ptr::copy_nonoverlapping as memcpy;
 
-use crate::buffers::create_buffer;
+use crate::buffers::{copy_buffer, create_buffer};
 use crate::AppData;
 
 type Vec2 = cgmath::Vector2<f32>;
@@ -61,26 +61,41 @@ pub unsafe fn create_vertex_buffer(
 ) -> Result<()> {
     let size = (size_of::<Vertex>() * VERTICES.len()) as u64;
 
-    let (vertex_buffer, vertex_memory) = create_buffer(
+    let (staging_buffer, staging_memory) = create_buffer(
         instance,
         device,
         data,
         size,
-        vk::BufferUsageFlags::VERTEX_BUFFER,
+        vk::BufferUsageFlags::TRANSFER_SRC,
         vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
     )?;
-    data.vertex_buffer = vertex_buffer;
-    data.vertex_buffer_memory = vertex_memory;
 
     let memory = device.map_memory(
-        data.vertex_buffer_memory,
+        staging_memory,
         0,
         size,
         vk::MemoryMapFlags::empty(),
     )?;
 
     memcpy(VERTICES.as_ptr(), memory.cast(), VERTICES.len());
-    device.unmap_memory(data.vertex_buffer_memory);
+    device.unmap_memory(staging_memory);
+
+
+    let (vertex_buffer, vertex_memory) = create_buffer(
+        instance,
+        device,
+        data,
+        size,
+        vk::BufferUsageFlags::VERTEX_BUFFER | vk::BufferUsageFlags::TRANSFER_DST,
+        vk::MemoryPropertyFlags::DEVICE_LOCAL,
+    )?;
+    data.vertex_buffer = vertex_buffer;
+    data.vertex_buffer_memory = vertex_memory;
+
+    copy_buffer(device, data, staging_buffer, data.vertex_buffer, size)?;
+
+    device.destroy_buffer(staging_buffer, None);
+    device.free_memory(staging_memory, None);
 
     Ok(())
 }
