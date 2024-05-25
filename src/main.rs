@@ -107,6 +107,7 @@ impl App {
         buffers::create_framebuffers(&device, &mut data)?;
         buffers::create_command_pool(&instance, &device, &mut data)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
+        vertex::create_index_buffer(&instance, &device, &mut data)?;
         buffers::create_command_buffers(&device, &mut data)?;
         buffers::create_sync_objects(&device, &mut data)?;
         Ok(Self {
@@ -194,6 +195,8 @@ impl App {
         self.device.device_wait_idle().unwrap();
 
         self.destroy_swapchain();
+        self.device.destroy_buffer(self.data.index_buffer, None);
+        self.device.free_memory(self.data.index_buffer_memory, None);
         self.device.destroy_buffer(self.data.vertex_buffer, None);
         self.device
             .free_memory(self.data.vertex_buffer_memory, None);
@@ -258,6 +261,8 @@ pub struct AppData {
     // Vertex Buffer
     vertex_buffer: vk::Buffer,
     vertex_buffer_memory: vk::DeviceMemory,
+    index_buffer: vk::Buffer,
+    index_buffer_memory: vk::DeviceMemory,
 }
 
 /// Creates a Vulkan instance.

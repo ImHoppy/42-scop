@@ -48,11 +48,14 @@ impl Vertex {
     }
 }
 
-pub static VERTICES: [Vertex; 3] = [
-    Vertex::new(vec2(0.0, -0.5), vec3(1.0, 0.0, 0.0)),
-    Vertex::new(vec2(0.5, 0.5), vec3(0.0, 1.0, 0.0)),
-    Vertex::new(vec2(-0.5, 0.5), vec3(0.0, 0.0, 1.0)),
+pub static VERTICES: [Vertex; 4] = [
+    Vertex::new(vec2(-0.5, -0.5), vec3(1.0, 0.0, 0.0)),
+    Vertex::new(vec2(0.5, -0.5), vec3(0.0, 1.0, 0.0)),
+    Vertex::new(vec2(0.5, 0.5), vec3(0.0, 0.0, 1.0)),
+    Vertex::new(vec2(-0.5, 0.5), vec3(1.0, 1.0, 1.0)),
 ];
+
+pub const INDICES: &[u16] = &[0, 1, 2, 2, 3, 0];
 
 pub unsafe fn create_vertex_buffer(
     instance: &Instance,
@@ -70,16 +73,11 @@ pub unsafe fn create_vertex_buffer(
         vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
     )?;
 
-    let memory = device.map_memory(
-        staging_memory,
-        0,
-        size,
-        vk::MemoryMapFlags::empty(),
-    )?;
+    let memory = device.map_memory(staging_memory, 0, size, vk::MemoryMapFlags::empty())?;
 
     memcpy(VERTICES.as_ptr(), memory.cast(), VERTICES.len());
-    device.unmap_memory(staging_memory);
 
+    device.unmap_memory(staging_memory);
 
     let (vertex_buffer, vertex_memory) = create_buffer(
         instance,
@@ -93,6 +91,47 @@ pub unsafe fn create_vertex_buffer(
     data.vertex_buffer_memory = vertex_memory;
 
     copy_buffer(device, data, staging_buffer, data.vertex_buffer, size)?;
+
+    device.destroy_buffer(staging_buffer, None);
+    device.free_memory(staging_memory, None);
+
+    Ok(())
+}
+
+pub unsafe fn create_index_buffer(
+    instance: &Instance,
+    device: &Device,
+    data: &mut AppData,
+) -> Result<()> {
+    let size = (size_of::<u16>() * INDICES.len()) as u64;
+
+    let (staging_buffer, staging_memory) = create_buffer(
+        instance,
+        device,
+        data,
+        size,
+        vk::BufferUsageFlags::TRANSFER_SRC,
+        vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+    )?;
+
+    let memory = device.map_memory(staging_memory, 0, size, vk::MemoryMapFlags::empty())?;
+
+    memcpy(INDICES.as_ptr(), memory.cast(), INDICES.len());
+
+    device.unmap_memory(staging_memory);
+
+    let (index_buffer, index_memory) = create_buffer(
+        instance,
+        device,
+        data,
+        size,
+        vk::BufferUsageFlags::INDEX_BUFFER | vk::BufferUsageFlags::TRANSFER_DST,
+        vk::MemoryPropertyFlags::DEVICE_LOCAL,
+    )?;
+    data.index_buffer = index_buffer;
+    data.index_buffer_memory = index_memory;
+
+    copy_buffer(device, data, staging_buffer, data.index_buffer, size)?;
 
     device.destroy_buffer(staging_buffer, None);
     device.free_memory(staging_memory, None);
