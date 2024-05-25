@@ -1,9 +1,11 @@
+use std::mem::size_of;
+
 use anyhow::{Ok, Result};
 
 use vulkanalia::prelude::v1_2::*;
 
 use crate::device::QueueFamilyIndices;
-use crate::vertex::VERTICES;
+use crate::vertex::{get_memory_type_index, Vertex, VERTICES};
 use crate::{AppData, MAX_FRAMES_IN_FLIGHT};
 
 pub unsafe fn create_framebuffers(device: &Device, data: &mut AppData) -> Result<()> {
@@ -109,4 +111,34 @@ pub unsafe fn create_sync_objects(device: &Device, data: &mut AppData) -> Result
         .collect();
 
     Ok(())
+}
+
+pub unsafe fn create_buffer(
+    instance: &Instance,
+    device: &Device,
+    data: &mut AppData,
+    size: vk::DeviceSize,
+    usage: vk::BufferUsageFlags,
+    properties: vk::MemoryPropertyFlags,
+) -> Result<(vk::Buffer, vk::DeviceMemory)> {
+    let buffer_info = vk::BufferCreateInfo::builder()
+        .size((size_of::<Vertex>() * VERTICES.len()) as u64)
+        .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
+        .sharing_mode(vk::SharingMode::EXCLUSIVE);
+
+    let buffer = device.create_buffer(&buffer_info, None)?;
+
+    let memory_requirements = device.get_buffer_memory_requirements(buffer);
+
+    let memory_type_index = get_memory_type_index(instance, data, properties, memory_requirements)?;
+
+    let allocate_info = vk::MemoryAllocateInfo::builder()
+        .allocation_size(memory_requirements.size)
+        .memory_type_index(memory_type_index);
+
+    let buffer_memory = device.allocate_memory(&allocate_info, None)?;
+
+    device.bind_buffer_memory(buffer, buffer_memory, 0)?;
+
+    Ok((buffer, buffer_memory))
 }

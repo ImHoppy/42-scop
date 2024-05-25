@@ -5,6 +5,7 @@ use vulkanalia::{prelude::v1_2::*, vk::Cast};
 use std::mem::size_of;
 use std::ptr::copy_nonoverlapping as memcpy;
 
+use crate::buffers::create_buffer;
 use crate::AppData;
 
 type Vec2 = cgmath::Vector2<f32>;
@@ -58,34 +59,23 @@ pub unsafe fn create_vertex_buffer(
     device: &Device,
     data: &mut AppData,
 ) -> Result<()> {
-    let buffer_info = vk::BufferCreateInfo::builder()
-        .size((size_of::<Vertex>() * VERTICES.len()) as u64)
-        .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
-        .sharing_mode(vk::SharingMode::EXCLUSIVE);
+    let size = (size_of::<Vertex>() * VERTICES.len()) as u64;
 
-    data.vertex_buffer = device.create_buffer(&buffer_info, None)?;
-
-    let memory_requirements = device.get_buffer_memory_requirements(data.vertex_buffer);
-
-    let memory_type_index = get_memory_type_index(
+    let (vertex_buffer, vertex_memory) = create_buffer(
         instance,
+        device,
         data,
+        size,
+        vk::BufferUsageFlags::VERTEX_BUFFER,
         vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-        memory_requirements,
     )?;
-
-    let allocate_info = vk::MemoryAllocateInfo::builder()
-        .allocation_size(memory_requirements.size)
-        .memory_type_index(memory_type_index);
-
-    data.vertex_buffer_memory = device.allocate_memory(&allocate_info, None)?;
-
-    device.bind_buffer_memory(data.vertex_buffer, data.vertex_buffer_memory, 0)?;
+    data.vertex_buffer = vertex_buffer;
+    data.vertex_buffer_memory = vertex_memory;
 
     let memory = device.map_memory(
         data.vertex_buffer_memory,
         0,
-        buffer_info.size,
+        size,
         vk::MemoryMapFlags::empty(),
     )?;
 
@@ -95,7 +85,7 @@ pub unsafe fn create_vertex_buffer(
     Ok(())
 }
 
-unsafe fn get_memory_type_index(
+pub unsafe fn get_memory_type_index(
     instance: &Instance,
     data: &AppData,
     properties: vk::MemoryPropertyFlags,
