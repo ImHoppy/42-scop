@@ -1,4 +1,5 @@
 mod buffers;
+mod descriptor;
 mod device;
 mod pipeline;
 mod swapchain;
@@ -103,6 +104,7 @@ impl App {
         swapchain::create_swapchain(window, &instance, &device, &mut data)?;
         swapchain::create_swapchain_image_views(&device, &mut data)?;
         pipeline::create_render_pass(&instance, &device, &mut data)?;
+        descriptor::create_descriptor_set_layout(&device, &mut data)?;
         pipeline::create(&device, &mut data)?;
         buffers::create_framebuffers(&device, &mut data)?;
         buffers::create_command_pool(&instance, &device, &mut data)?;
@@ -191,29 +193,22 @@ impl App {
     }
 
     /// Destroys our Vulkan app.
+    #[rustfmt::skip]
     unsafe fn destroy(&mut self) {
         self.device.device_wait_idle().unwrap();
 
         self.destroy_swapchain();
+
+        self.data.in_flight_fences.iter().for_each(|f| self.device.destroy_fence(*f, None));
+        self.data.render_finished_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
+        self.data.image_available_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
+
+        self.device.destroy_buffer(self.data.vertex_buffer, None);
+        self.device.free_memory(self.data.vertex_buffer_memory, None);
         self.device.destroy_buffer(self.data.index_buffer, None);
         self.device.free_memory(self.data.index_buffer_memory, None);
-        self.device.destroy_buffer(self.data.vertex_buffer, None);
-        self.device
-            .free_memory(self.data.vertex_buffer_memory, None);
-        self.data
-            .in_flight_fences
-            .iter()
-            .for_each(|f| self.device.destroy_fence(*f, None));
-        self.data
-            .render_finished_semaphores
-            .iter()
-            .for_each(|s| self.device.destroy_semaphore(*s, None));
-        self.data
-            .image_available_semaphores
-            .iter()
-            .for_each(|s| self.device.destroy_semaphore(*s, None));
-        self.device
-            .destroy_command_pool(self.data.command_pool, None);
+        self.device.destroy_command_pool(self.data.command_pool, None);
+        self.device.destroy_descriptor_set_layout(self.data.descriptor_set_layout, None);
         self.device.destroy_device(None);
         self.instance.destroy_surface_khr(self.data.surface, None);
 
@@ -245,6 +240,7 @@ pub struct AppData {
     swapchain_images_views: Vec<vk::ImageView>,
     // Pipeline
     render_pass: vk::RenderPass,
+    descriptor_set_layout: vk::DescriptorSetLayout,
     pipeline_layout: vk::PipelineLayout,
     pipeline: vk::Pipeline,
     // Framebuffers
