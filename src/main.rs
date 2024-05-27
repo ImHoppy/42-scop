@@ -1,16 +1,21 @@
 mod buffers;
 mod descriptor;
 mod device;
+mod math;
 mod pipeline;
 mod swapchain;
 mod vertex;
 
 use anyhow::{anyhow, Result};
+use cgmath::Deg;
+use descriptor::Mat4;
 use device::{create_logical_device, pick_physical_device};
 use log::*;
+use math::vec3;
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::os::raw::c_void;
+use std::time::Instant;
 
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
@@ -89,6 +94,7 @@ pub struct App {
     device: Device,
     frame: usize,
     resized: bool,
+    start: Instant,
 }
 
 impl App {
@@ -119,6 +125,7 @@ impl App {
             device,
             frame: 0,
             resized: false,
+            start: Instant::now(),
         })
     }
 
@@ -151,6 +158,8 @@ impl App {
         }
 
         self.data.images_in_flight[image_index as usize] = in_flight_fence;
+
+        self.update_uniform_buffer(image_index)?;
 
         let wait_semaphores = [self.data.image_available_semaphores[self.frame]];
         let wait_stages = [vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
@@ -219,6 +228,14 @@ impl App {
 
         self.instance.destroy_instance(None);
     }
+
+    unsafe fn update_uniform_buffer(&mut self, image_index: usize) -> Result<()> {
+        let time = self.start.elapsed().as_secs_f32();
+
+        let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), Deg(90.0) * time);
+
+        Ok(())
+    }
 }
 
 /// The Vulkan handles and associated properties used by our Vulkan app.
@@ -259,6 +276,8 @@ pub struct AppData {
     vertex_buffer_memory: vk::DeviceMemory,
     index_buffer: vk::Buffer,
     index_buffer_memory: vk::DeviceMemory,
+    uniform_buffers: Vec<vk::Buffer>,
+    uniform_buffers_memory: Vec<vk::DeviceMemory>,
 }
 
 /// Creates a Vulkan instance.

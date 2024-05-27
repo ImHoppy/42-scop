@@ -3,8 +3,8 @@ use anyhow::{Ok, Result};
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::prelude::v1_2::*;
 
-use crate::AppData;
 use crate::vertex::Vertex;
+use crate::AppData;
 
 pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
     let vert = include_bytes!("../shaders_compiled/shader.vert.spv");
@@ -86,7 +86,8 @@ pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
 
     //
 
-    let layout_info = vk::PipelineLayoutCreateInfo::builder();
+    let set_layouts = &[data.descriptor_set_layout];
+    let layout_info = vk::PipelineLayoutCreateInfo::builder().set_layouts(set_layouts);
 
     data.pipeline_layout = device.create_pipeline_layout(&layout_info, None)?;
 

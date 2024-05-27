@@ -1,4 +1,5 @@
 use crate::buffers;
+use crate::descriptor;
 use crate::pipeline;
 use crate::{App, AppData};
 
@@ -22,6 +23,7 @@ impl App {
         pipeline::create_render_pass(&self.instance, &self.device, &mut self.data)?;
         pipeline::create(&self.device, &mut self.data)?;
         buffers::create_framebuffers(&self.device, &mut self.data)?;
+        descriptor::create_uniform_buffers(&self.instance, &self.device, &mut self.data)?;
         buffers::create_command_buffers(&self.device, &mut self.data)?;
         self.data
             .images_in_flight
@@ -30,6 +32,15 @@ impl App {
     }
 
     pub unsafe fn destroy_swapchain(&mut self) {
+        self.data
+            .uniform_buffers
+            .iter()
+            .for_each(|b| self.device.destroy_buffer(*b, None));
+        self.data
+            .uniform_buffers_memory
+            .iter()
+            .for_each(|m| self.device.free_memory(*m, None));
+
         self.device
             .free_command_buffers(self.data.command_pool, &self.data.command_buffers);
         self.data

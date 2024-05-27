@@ -1,9 +1,11 @@
+use std::mem::size_of;
+
 use anyhow::{anyhow, Ok, Result};
 use vulkanalia::prelude::v1_2::*;
 
-use crate::AppData;
+use crate::{buffers::create_buffer, device, AppData};
 
-type Mat4 = cgmath::Matrix4<f32>;
+pub type Mat4 = crate::math::Matrix4<f32>;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -21,10 +23,34 @@ pub unsafe fn create_descriptor_set_layout(device: &Device, data: &mut AppData) 
         .stage_flags(vk::ShaderStageFlags::VERTEX);
 
     let bindings = [ubo_binding];
-
     let layout_info = vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings);
 
     data.descriptor_set_layout = device.create_descriptor_set_layout(&layout_info, None)?;
+
+    Ok(())
+}
+
+pub unsafe fn create_uniform_buffers(
+    instance: &Instance,
+    device: &Device,
+    data: &mut AppData,
+) -> Result<()> {
+    data.uniform_buffers.clear();
+    data.uniform_buffers_memory.clear();
+
+    for _ in 0..data.swapchain_images.len() {
+        let (uniform_buffer, uniform_buffer_memory) = create_buffer(
+            instance,
+            device,
+            data,
+            size_of::<UniformBufferObject>() as u64,
+            vk::BufferUsageFlags::UNIFORM_BUFFER,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+        )?;
+
+        data.uniform_buffers.push(uniform_buffer);
+        data.uniform_buffers_memory.push(uniform_buffer_memory);
+    }
 
     Ok(())
 }
