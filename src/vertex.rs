@@ -1,5 +1,5 @@
+use crate::math::{vec2, vec3, Vec2, Vec3};
 use anyhow::{anyhow, Ok, Result};
-use cgmath::{vec2, vec3};
 use vulkanalia::prelude::v1_2::*;
 
 use std::mem::size_of;
@@ -7,9 +7,6 @@ use std::ptr::copy_nonoverlapping as memcpy;
 
 use crate::buffers::{copy_buffer, create_buffer};
 use crate::AppData;
-
-type Vec2 = cgmath::Vector2<f32>;
-type Vec3 = cgmath::Vector3<f32>;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
