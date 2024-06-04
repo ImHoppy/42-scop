@@ -77,4 +77,24 @@ impl Matrix4 {
 			0.0, 0.0, 0.0, 1.0,
 		)
     }
+
+    /// Create a homogeneous transformation matrix that will cause a vector to point at
+    /// `dir`, using `up` for orientation.
+    pub fn look_to_rh(eye: Point3, dir: Vector3<f32>, up: Vector3<f32>) -> Matrix4 {
+        let f = dir.normalize();
+        let s = f.cross(up).normalize();
+        let u = s.cross(f);
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        Matrix4::new(
+            s.x, u.x, -f.x, 0.0,
+            s.y, u.y, -f.y, 0.0,
+            s.z, u.z, -f.z, 0.0,
+            -eye.dot(s), -eye.dot(u), eye.dot(f), 1.0,
+        )
+    }
+
+    pub fn look_at_rh(eye: Point3, center: Point3, up: Vector3<f32>) -> Matrix4 {
+        Matrix4::look_at_rh(eye, center - eye, up)
+    }
 }
