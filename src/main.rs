@@ -7,7 +7,6 @@ mod swapchain;
 mod vertex;
 
 use anyhow::{anyhow, Result};
-use cgmath::Deg;
 use descriptor::Mat4;
 use device::{create_logical_device, pick_physical_device};
 use log::*;
@@ -232,7 +231,7 @@ impl App {
     unsafe fn update_uniform_buffer(&mut self, image_index: usize) -> Result<()> {
         let time = self.start.elapsed().as_secs_f32();
 
-        let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), Deg(90.0) * time);
+        let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), 90.0 * time);
 
         Ok(())
     }
