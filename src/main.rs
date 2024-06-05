@@ -233,6 +233,12 @@ impl App {
 
         let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), 90.0 * time);
 
+        let view = Mat4::look_at_rh(
+            vec3(2.0, 2.0, 2.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(0.0, 0.0, 1.0),
+        );
+
         Ok(())
     }
 }

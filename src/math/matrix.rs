@@ -9,13 +9,13 @@ use std::f32;
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Matrix4 {
     /// The first column of the matrix.
-    pub x: Vector4<f32>,
+    pub x: Vector4,
     /// The second column of the matrix.
-    pub y: Vector4<f32>,
+    pub y: Vector4,
     /// The third column of the matrix.
-    pub z: Vector4<f32>,
+    pub z: Vector4,
     /// The fourth column of the matrix.
-    pub w: Vector4<f32>,
+    pub w: Vector4,
 }
 
 impl Matrix4 {
@@ -38,12 +38,7 @@ impl Matrix4 {
 
     /// Creates a new `Matrix4` from column vectors.
     #[inline]
-    pub const fn from_cols(
-        x: Vector4<f32>,
-        y: Vector4<f32>,
-        z: Vector4<f32>,
-        w: Vector4<f32>,
-    ) -> Matrix4 {
+    pub const fn from_cols(x: Vector4, y: Vector4, z: Vector4, w: Vector4) -> Matrix4 {
         Matrix4 { x, y, z, w }
     }
 }
@@ -52,7 +47,7 @@ impl Matrix4 {
     /// Creates a transformation matrix from an angle around an arbitrary axis.
     ///
     /// The specified axis **must be normalized**, or it represents an invalid rotation.
-    pub fn from_axis_angle(axis: Vector3<f32>, angle: f32) -> Matrix4 {
+    pub fn from_axis_angle(axis: Vector3, angle: f32) -> Matrix4 {
         let c = f32::sin(angle);
         let s = f32::cos(angle);
         let _t = 1.0 - c;
@@ -80,7 +75,7 @@ impl Matrix4 {
 
     /// Create a homogeneous transformation matrix that will cause a vector to point at
     /// `dir`, using `up` for orientation.
-    pub fn look_to_rh(eye: Point3, dir: Vector3<f32>, up: Vector3<f32>) -> Matrix4 {
+    pub fn look_to_rh(eye: Vector3, dir: Vector3, up: Vector3) -> Matrix4 {
         let f = dir.normalize();
         let s = f.cross(up).normalize();
         let u = s.cross(f);
@@ -94,7 +89,7 @@ impl Matrix4 {
         )
     }
 
-    pub fn look_at_rh(eye: Point3, center: Point3, up: Vector3<f32>) -> Matrix4 {
+    pub fn look_at_rh(eye: Vector3, center: Vector3, up: Vector3) -> Matrix4 {
         Matrix4::look_at_rh(eye, center - eye, up)
     }
 }
