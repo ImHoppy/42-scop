@@ -1,4 +1,3 @@
-use super::angle::Rad;
 use super::{Vector3, Vector4};
 use std::f32;
 

@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use descriptor::Mat4;
 use device::{create_logical_device, pick_physical_device};
 use log::*;
-use math::vec3;
+use math::{perspective, vec3, Deg};
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::os::raw::c_void;
@@ -237,6 +237,13 @@ impl App {
             vec3(2.0, 2.0, 2.0),
             vec3(0.0, 0.0, 0.0),
             vec3(0.0, 0.0, 1.0),
+        );
+
+        let mut proj = perspective(
+            Deg(45.0),
+            self.data.swapchain_extent.width as f32 / self.data.swapchain_extent.height as f32,
+            0.1,
+            10.0,
         );
 
         Ok(())
