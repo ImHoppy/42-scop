@@ -9,10 +9,10 @@ pub type Mat4 = crate::math::Matrix4;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-struct UniformBufferObject {
-    model: Mat4,
-    view: Mat4,
-    proj: Mat4,
+pub struct UniformBufferObject {
+    pub model: Mat4,
+    pub view: Mat4,
+    pub proj: Mat4,
 }
 
 pub unsafe fn create_descriptor_set_layout(device: &Device, data: &mut AppData) -> Result<()> {

@@ -7,13 +7,15 @@ mod swapchain;
 mod vertex;
 
 use anyhow::{anyhow, Result};
-use descriptor::Mat4;
+use descriptor::{Mat4, UniformBufferObject};
 use device::{create_logical_device, pick_physical_device};
 use log::*;
 use math::{perspective, vec3, Deg};
 use std::collections::HashSet;
 use std::ffi::CStr;
+use std::mem::size_of;
 use std::os::raw::c_void;
+use std::ptr::copy_nonoverlapping as memcpy;
 use std::time::Instant;
 
 use winit::dpi::LogicalSize;
@@ -245,6 +247,20 @@ impl App {
             0.1,
             10.0,
         );
+
+        let ubo = UniformBufferObject { model, view, proj };
+
+        let memory = self.device.map_memory(
+            self.data.uniform_buffers_memory[image_index],
+            0,
+            size_of::<UniformBufferObject>() as u64,
+            vk::MemoryMapFlags::empty(),
+        )?;
+
+        memcpy(&ubo, memory.cast(), 1);
+
+        self.device
+            .unmap_memory(self.data.uniform_buffers_memory[image_index]);
 
         Ok(())
     }

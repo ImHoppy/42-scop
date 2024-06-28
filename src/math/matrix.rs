@@ -89,6 +89,6 @@ impl Matrix4 {
     }
 
     pub fn look_at_rh(eye: Vector3, center: Vector3, up: Vector3) -> Matrix4 {
-        Matrix4::look_at_rh(eye, center - eye, up)
+        Matrix4::look_to_rh(eye, center - eye, up)
     }
 }
