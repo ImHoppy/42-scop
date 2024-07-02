@@ -117,6 +117,7 @@ impl App {
         buffers::create_command_pool(&instance, &device, &mut data)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         vertex::create_index_buffer(&instance, &device, &mut data)?;
+        descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
         buffers::create_command_buffers(&device, &mut data)?;
         buffers::create_sync_objects(&device, &mut data)?;
         Ok(Self {

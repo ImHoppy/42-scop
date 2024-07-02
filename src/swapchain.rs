@@ -32,6 +32,7 @@ impl App {
     }
 
     pub unsafe fn destroy_swapchain(&mut self) {
+        // Destroy descriptor buffers
         self.data
             .uniform_buffers
             .iter()
