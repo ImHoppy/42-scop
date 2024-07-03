@@ -24,6 +24,7 @@ impl App {
         pipeline::create(&self.device, &mut self.data)?;
         buffers::create_framebuffers(&self.device, &mut self.data)?;
         descriptor::create_uniform_buffers(&self.instance, &self.device, &mut self.data)?;
+        descriptor::create_descriptor_pool(&self.device, &mut self.data)?;
         buffers::create_command_buffers(&self.device, &mut self.data)?;
         self.data
             .images_in_flight
@@ -33,6 +34,8 @@ impl App {
 
     pub unsafe fn destroy_swapchain(&mut self) {
         // Destroy descriptor buffers
+        self.device
+            .destroy_descriptor_pool(self.data.descriptor_pool, None);
         self.data
             .uniform_buffers
             .iter()
