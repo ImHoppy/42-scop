@@ -25,6 +25,7 @@ impl App {
         buffers::create_framebuffers(&self.device, &mut self.data)?;
         descriptor::create_uniform_buffers(&self.instance, &self.device, &mut self.data)?;
         descriptor::create_descriptor_pool(&self.device, &mut self.data)?;
+        descriptor::create_descriptor_sets(&self.device, &mut self.data)?;
         buffers::create_command_buffers(&self.device, &mut self.data)?;
         self.data
             .images_in_flight

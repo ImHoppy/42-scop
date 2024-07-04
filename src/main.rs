@@ -119,6 +119,7 @@ impl App {
         vertex::create_index_buffer(&instance, &device, &mut data)?;
         descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
         descriptor::create_descriptor_pool(&device, &mut data)?;
+        descriptor::create_descriptor_sets(&device, &mut data)?;
         buffers::create_command_buffers(&device, &mut data)?;
         buffers::create_sync_objects(&device, &mut data)?;
         Ok(Self {
@@ -308,7 +309,9 @@ pub struct AppData {
     index_buffer_memory: vk::DeviceMemory,
     uniform_buffers: Vec<vk::Buffer>,
     uniform_buffers_memory: Vec<vk::DeviceMemory>,
+    // Descriptor
     descriptor_pool: vk::DescriptorPool,
+    descriptor_sets: Vec<vk::DescriptorSet>,
 }
 
 /// Creates a Vulkan instance.
