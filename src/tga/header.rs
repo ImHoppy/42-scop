@@ -1,6 +1,5 @@
 use nom::{
     combinator::{map, map_opt, map_res},
-    complete::bool,
     number::complete::{le_u16, le_u8},
     IResult,
 };
@@ -25,6 +24,26 @@ impl Bpp {
             32 => Self::Bits32,
             _ => return None,
         })
+    }
+
+    /// Returns the number of bits.
+    pub fn bits(&self) -> u8 {
+        match self {
+            Self::Bits8 => 8,
+            Self::Bits16 => 16,
+            Self::Bits24 => 24,
+            Self::Bits32 => 32,
+        }
+    }
+
+    /// Returns the number of bytes
+    pub fn bytes(&self) -> u8 {
+        match self {
+            Self::Bits8 => 1,
+            Self::Bits16 => 2,
+            Self::Bits24 => 3,
+            Self::Bits32 => 4,
+        }
     }
 }
 
