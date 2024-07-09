@@ -5,6 +5,7 @@ mod math;
 mod pipeline;
 mod swapchain;
 mod vertex;
+mod tga;
 
 use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
@@ -40,6 +41,11 @@ pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
 fn main() -> Result<()> {
     pretty_env_logger::init();
+
+
+    let data = include_bytes!("../_resources/orange_texture.tga");
+    let (input, tga_header) = crate::tga::TgaHeader::parse(data).unwrap();
+    println!("tga_header: {:?}", tga_header);
 
     // Window
 

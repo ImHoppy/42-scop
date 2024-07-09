@@ -1,3 +1,5 @@
+use std::ops::{Add, Sub, Mul, Div, Index};
+
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Size {
