@@ -1,11 +1,13 @@
 use nom::{bytes::complete::take, IResult};
 
-use super::{ColorMap, size::Size, Bpp, DataType, ImageOrigin, TgaError, TgaHeader};
+use super::{footer::TgaFooter, Bpp, ColorMap, DataType, ImageOrigin, TgaError, TgaHeader};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Tga<'a> {
     header: TgaHeader,
     pixels: &'a [u8],
+    width: u16,
+    height: u16,
 }
 
 impl<'a> Tga<'a> {
@@ -15,10 +17,22 @@ impl<'a> Tga<'a> {
         let (input, _image_id) = parse_image_id(input, &header).map_err(|_| TgaError::Header)?;
         let (input, color_map) = ColorMap::parse(input, &header)?;
 
+        let footer_length = TgaFooter::parse(input)
+            .map(|footer| footer.length(data))
+            .unwrap_or(0);
+
+        let pixel_data = &[0..input.len().saturating_sub(footer_length)];
+
         Ok(Self {
             header,
             pixels: data,
+            width: header.width,
+            height: header.height,
         })
+    }
+
+    pub fn image_data(&self) -> &'a [u8] {
+        self.pixels
     }
 }
 
