@@ -2,7 +2,7 @@ use nom::{bytes::complete::take, IResult};
 
 use super::{footer::TgaFooter, Bpp, ColorMap, DataType, ImageOrigin, TgaError, TgaHeader};
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Tga<'a> {
     header: TgaHeader,
     pixels: &'a [u8],
