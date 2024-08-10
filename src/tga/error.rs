@@ -1,3 +1,4 @@
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum TgaError {
     /// An error occurred when parsing the TGA header.
 	Header,
@@ -7,4 +8,6 @@ pub enum TgaError {
 	UnknownImageType(u8),
 	/// Not supported compressed
 	CompressedNotImplemented,
+	/// Error parsing image data
+	ParseImageData,
 }
