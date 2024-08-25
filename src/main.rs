@@ -5,7 +5,6 @@ mod math;
 mod pipeline;
 mod swapchain;
 mod vertex;
-mod tga;
 
 use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
