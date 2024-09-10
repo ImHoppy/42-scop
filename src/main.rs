@@ -5,6 +5,7 @@ mod math;
 mod pipeline;
 mod swapchain;
 mod vertex;
+mod textures;
 
 use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
@@ -115,6 +116,7 @@ impl App {
         pipeline::create(&device, &mut data)?;
         buffers::create_framebuffers(&device, &mut data)?;
         buffers::create_command_pool(&instance, &device, &mut data)?;
+        textures::create_texture_image(&instance, &device, &mut data)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         vertex::create_index_buffer(&instance, &device, &mut data)?;
         descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
