@@ -218,6 +218,8 @@ impl App {
         self.data.render_finished_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
         self.data.image_available_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
 
+        self.device.destroy_image(self.data.texture_image, None);
+        self.device.free_memory(self.data.texture_image_memory, None);
         self.device.destroy_buffer(self.data.vertex_buffer, None);
         self.device.free_memory(self.data.vertex_buffer_memory, None);
         self.device.destroy_buffer(self.data.index_buffer, None);
@@ -314,6 +316,9 @@ pub struct AppData {
     // Descriptor
     descriptor_pool: vk::DescriptorPool,
     descriptor_sets: Vec<vk::DescriptorSet>,
+    // Textures
+    texture_image: vk::Image,
+    texture_image_memory: vk::DeviceMemory,
 }
 
 /// Creates a Vulkan instance.
