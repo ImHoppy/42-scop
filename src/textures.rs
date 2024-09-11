@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::fs::File;
-use vulkanalia::prelude::v1_2::*;
 use std::ptr::copy_nonoverlapping as memcpy;
+use vulkanalia::prelude::v1_2::*;
 
 use crate::{buffers, vertex::get_memory_type_index, AppData};
 
@@ -30,18 +30,44 @@ pub unsafe fn create_texture_image(
         vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
     )?;
 
-    let memory = device.map_memory(
-        staging_buffer_memory,
-        0,
-        size,
-        vk::MemoryMapFlags::empty(),
-    )?;
+    let memory = device.map_memory(staging_buffer_memory, 0, size, vk::MemoryMapFlags::empty())?;
 
     memcpy(pixels.as_ptr(), memory.cast(), pixels.len());
 
     device.unmap_memory(staging_buffer_memory);
 
+    let (texture_image, texture_image_memory) = create_image(
+        instance,
+        device,
+        data,
+        width,
+        height,
+        vk::Format::R8G8B8A8_SRGB,
+        vk::ImageTiling::OPTIMAL,
+        vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::TRANSFER_DST,
+        vk::MemoryPropertyFlags::DEVICE_LOCAL,
+    )?;
 
+    data.texture_image = texture_image;
+    data.texture_image_memory = texture_image_memory;
+
+    device.destroy_buffer(staging_buffer, None);
+    device.free_memory(staging_buffer_memory, None);
+
+    Ok(())
+}
+
+unsafe fn create_image(
+    instance: &Instance,
+    device: &Device,
+    data: &mut AppData,
+    width: u32,
+    height: u32,
+    format: vk::Format,
+    tiling: vk::ImageTiling,
+    usage: vk::ImageUsageFlags,
+    properties: vk::MemoryPropertyFlags,
+) -> Result<(vk::Image, vk::DeviceMemory)> {
     let info = vk::ImageCreateInfo::builder()
         .image_type(vk::ImageType::_2D)
         .extent(vk::Extent3D {
@@ -51,32 +77,29 @@ pub unsafe fn create_texture_image(
         })
         .mip_levels(1)
         .array_layers(1)
-        .format(vk::Format::R8G8B8A8_SRGB)
-        .tiling(vk::ImageTiling::OPTIMAL)
+        .format(format)
+        .tiling(tiling)
         .initial_layout(vk::ImageLayout::UNDEFINED)
-        .usage(vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::TRANSFER_DST)
+        .usage(usage)
         .sharing_mode(vk::SharingMode::EXCLUSIVE)
         .samples(vk::SampleCountFlags::_1);
 
-    data.texture_image = device.create_image(&info, None)?;
+    let image = device.create_image(&info, None)?;
 
-    let memory_requirements = device.get_image_memory_requirements(data.texture_image);
+    let memory_requirements = device.get_image_memory_requirements(image);
 
     let info = vk::MemoryAllocateInfo::builder()
         .allocation_size(memory_requirements.size)
         .memory_type_index(get_memory_type_index(
             instance,
             data,
-            vk::MemoryPropertyFlags::DEVICE_LOCAL,
+            properties,
             memory_requirements,
         )?);
 
-    data.texture_image_memory = device.allocate_memory(&info, None)?;
+    let image_memory = device.allocate_memory(&info, None)?;
 
-    device.bind_image_memory(data.texture_image, data.texture_image_memory, 0)?;
+    device.bind_image_memory(image, image_memory, 0)?;
 
-    device.destroy_buffer(staging_buffer, None);
-    device.free_memory(staging_buffer_memory, None);
-
-    Ok(())
+    Ok((image, image_memory))
 }
