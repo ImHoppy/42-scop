@@ -157,6 +157,23 @@ pub unsafe fn copy_buffer(
     destination: vk::Buffer,
     size: vk::DeviceSize,
 ) -> Result<()> {
+    let command_buffer = begin_single_time_commands(device, data)?;
+
+    let copy_region = vk::BufferCopy::builder()
+        .src_offset(0)
+        .dst_offset(0)
+        .size(size);
+    device.cmd_copy_buffer(command_buffer, source, destination, &[copy_region]);
+
+    end_single_time_commands(device, data, command_buffer)?;
+
+    Ok(())
+}
+
+pub unsafe fn begin_single_time_commands(
+    device: &Device,
+    data: &AppData,
+) -> Result<vk::CommandBuffer> {
     let allocate_info = vk::CommandBufferAllocateInfo::builder()
         .level(vk::CommandBufferLevel::PRIMARY)
         .command_pool(data.command_pool)
@@ -169,12 +186,14 @@ pub unsafe fn copy_buffer(
 
     device.begin_command_buffer(command_buffer, &begin_info)?;
 
-    let copy_region = vk::BufferCopy::builder()
-        .src_offset(0)
-        .dst_offset(0)
-        .size(size);
-    device.cmd_copy_buffer(command_buffer, source, destination, &[copy_region]);
+    Ok(command_buffer)
+}
 
+pub unsafe fn end_single_time_commands(
+    device: &Device,
+    data: &AppData,
+    command_buffer: vk::CommandBuffer,
+) -> Result<()> {
     device.end_command_buffer(command_buffer)?;
 
     let command_buffers = [command_buffer];
