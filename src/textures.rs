@@ -55,9 +55,6 @@ pub unsafe fn create_texture_image(
     data.texture_image = texture_image;
     data.texture_image_memory = texture_image_memory;
 
-    device.destroy_buffer(staging_buffer, None);
-    device.free_memory(staging_buffer_memory, None);
-
     transition_image_layout(
         device,
         data,
@@ -84,6 +81,9 @@ pub unsafe fn create_texture_image(
         vk::ImageLayout::TRANSFER_DST_OPTIMAL,
         vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
     )?;
+
+    device.destroy_buffer(staging_buffer, None);
+    device.free_memory(staging_buffer_memory, None);
 
     Ok(())
 }
