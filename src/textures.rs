@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::fs::File;
 use std::ptr::copy_nonoverlapping as memcpy;
 use vulkanalia::prelude::v1_2::*;
@@ -143,6 +143,23 @@ pub unsafe fn transition_image_layout(
     old_layout: vk::ImageLayout,
     new_layout: vk::ImageLayout,
 ) -> Result<()> {
+    let (src_access_mask, dst_access_mask, src_stage_mask, dst_stage_mask) =
+        match (old_layout, new_layout) {
+            (vk::ImageLayout::UNDEFINED, vk::ImageLayout::TRANSFER_DST_OPTIMAL) => (
+                vk::AccessFlags::empty(),
+                vk::AccessFlags::TRANSFER_WRITE,
+                vk::PipelineStageFlags::TOP_OF_PIPE,
+                vk::PipelineStageFlags::TRANSFER,
+            ),
+            (vk::ImageLayout::TRANSFER_DST_OPTIMAL, vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL) => (
+                vk::AccessFlags::TRANSFER_WRITE,
+                vk::AccessFlags::SHADER_READ,
+                vk::PipelineStageFlags::TRANSFER,
+                vk::PipelineStageFlags::FRAGMENT_SHADER,
+            ),
+            _ => return Err(anyhow!("unsupported image layout transition")),
+        };
+
     let command_buffer = begin_single_time_commands(device, data)?;
 
     let subresource = vk::ImageSubresourceRange::builder()
@@ -159,13 +176,13 @@ pub unsafe fn transition_image_layout(
         .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
         .image(image)
         .subresource_range(subresource)
-        .src_access_mask(vk::AccessFlags::empty())
-        .dst_access_mask(vk::AccessFlags::empty());
+        .src_access_mask(src_access_mask)
+        .dst_access_mask(dst_access_mask);
 
     device.cmd_pipeline_barrier(
         command_buffer,
-        vk::PipelineStageFlags::empty(),
-        vk::PipelineStageFlags::empty(),
+        src_stage_mask,
+        dst_stage_mask,
         vk::DependencyFlags::empty(),
         &[] as &[vk::MemoryBarrier],
         &[] as &[vk::BufferMemoryBarrier],
