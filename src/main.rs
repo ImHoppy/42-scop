@@ -339,7 +339,7 @@ unsafe fn create_instance(window: &Window, entry: &Entry, data: &mut AppData) ->
         extensions.push(vk::EXT_DEBUG_UTILS_EXTENSION.name.as_ptr());
     }
 
-    let flags = if cfg!(targer_os = "macos") && entry.version()? >= PORTABILITY_MACOS_VERSION {
+    let flags = if cfg!(target_os = "macos") && entry.version()? >= PORTABILITY_MACOS_VERSION {
         info!("Enabling extensions for macOS portability.");
         extensions.push(
             vk::KHR_GET_PHYSICAL_DEVICE_PROPERTIES2_EXTENSION
