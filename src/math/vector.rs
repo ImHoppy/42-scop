@@ -78,6 +78,33 @@ macro_rules! impl_vector {
             }
         }
 
+        impl std::convert::AsRef<[f32; $VectorNFieldsCount]> for $VectorN {
+            fn as_ref(&self) -> &[f32; $VectorNFieldsCount] {
+                unsafe { std::mem::transmute(self) }
+            }
+        }
+
+        impl std::convert::AsMut<[f32; $VectorNFieldsCount]> for $VectorN {
+            fn as_mut(&mut self) -> &mut [f32; $VectorNFieldsCount] {
+                unsafe { std::mem::transmute(self) }
+            }
+        }
+
+        impl std::ops::Index<usize> for $VectorN {
+            type Output = f32;
+
+            fn index(&self, index: usize) -> &Self::Output {
+                let as_ref: &[f32; $VectorNFieldsCount] = self.as_ref();
+                &as_ref[index]
+            }
+        }
+
+        impl std::ops::IndexMut<usize> for $VectorN {
+            fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+                let as_mut: &mut [f32; $VectorNFieldsCount] = self.as_mut();
+                &mut as_mut[index]
+            }
+        }
 
 		#[inline]
 		pub const fn $constructor($($field: f32),+) -> $VectorN {

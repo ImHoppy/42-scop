@@ -41,6 +41,30 @@ impl Matrix4 {
         Matrix4 { x, y, z, w }
     }
 }
+impl std::ops::Index<usize> for Matrix4 {
+    type Output = Vector4;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            3 => &self.w,
+            _ => panic!("Index out of bounds for Matrix4"),
+        }
+    }
+}
+impl std::ops::IndexMut<usize> for Matrix4 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            3 => &mut self.w,
+            _ => panic!("Index out of bounds for Matrix4"),
+        }
+    }
+}
 
 impl Matrix4 {
     /// Creates a transformation matrix from an angle around an arbitrary axis.
