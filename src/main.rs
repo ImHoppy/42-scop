@@ -117,6 +117,7 @@ impl App {
         buffers::create_framebuffers(&device, &mut data)?;
         buffers::create_command_pool(&instance, &device, &mut data)?;
         textures::create_texture_image(&instance, &device, &mut data)?;
+        textures::create_texture_image_view(&device, &mut data)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         vertex::create_index_buffer(&instance, &device, &mut data)?;
         descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
@@ -218,6 +219,7 @@ impl App {
         self.data.render_finished_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
         self.data.image_available_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
 
+        self.device.destroy_image_view(self.data.texture_image_view, None);
         self.device.destroy_image(self.data.texture_image, None);
         self.device.free_memory(self.data.texture_image_memory, None);
         self.device.destroy_buffer(self.data.vertex_buffer, None);

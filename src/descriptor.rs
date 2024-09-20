@@ -3,7 +3,7 @@ use std::mem::size_of;
 use anyhow::{anyhow, Ok, Result};
 use vulkanalia::prelude::v1_2::*;
 
-use crate::{buffers::create_buffer, device, AppData};
+use crate::{buffers::create_buffer, AppData};
 
 pub type Mat4 = crate::math::Matrix4;
 
