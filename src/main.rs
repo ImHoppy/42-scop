@@ -118,6 +118,7 @@ impl App {
         buffers::create_command_pool(&instance, &device, &mut data)?;
         textures::create_texture_image(&instance, &device, &mut data)?;
         textures::create_texture_image_view(&device, &mut data)?;
+        textures::create_texture_sampler(&device, &mut data)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         vertex::create_index_buffer(&instance, &device, &mut data)?;
         descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
@@ -219,6 +220,7 @@ impl App {
         self.data.render_finished_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
         self.data.image_available_semaphores.iter().for_each(|s| self.device.destroy_semaphore(*s, None));
 
+        self.device.destroy_sampler(self.data.texture_sampler, None);
         self.device.destroy_image_view(self.data.texture_image_view, None);
         self.device.destroy_image(self.data.texture_image, None);
         self.device.free_memory(self.data.texture_image_memory, None);
@@ -321,6 +323,8 @@ pub struct AppData {
     // Textures
     texture_image: vk::Image,
     texture_image_memory: vk::DeviceMemory,
+    texture_image_view: vk::ImageView,
+    texture_sampler: vk::Sampler,
 }
 
 /// Creates a Vulkan instance.
