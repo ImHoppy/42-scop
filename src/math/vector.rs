@@ -68,6 +68,46 @@ macro_rules! impl_vector {
             }
         }
 
+        impl std::ops::Mul<$VectorN> for $VectorN {
+            type Output = $VectorN;
+
+            fn mul(self, scalar: $VectorN) -> Self::Output {
+                $VectorN {
+                    $($field: self.$field * scalar.$field),+
+                }
+            }
+        }
+
+        impl std::ops::Add<f32> for $VectorN {
+            type Output = $VectorN;
+
+            fn add(self, scalar: f32) -> Self::Output {
+                $VectorN {
+                    $($field: self.$field + scalar),+
+                }
+            }
+        }
+
+        impl std::ops::Add<$VectorN> for $VectorN {
+            type Output = $VectorN;
+
+            fn add(self, other: $VectorN) -> Self::Output {
+                $VectorN {
+                    $($field: self.$field + other.$field),+
+                }
+            }
+        }
+
+        impl std::ops::Sub<f32> for $VectorN {
+            type Output = $VectorN;
+
+            fn sub(self, scalar: f32) -> Self::Output {
+                $VectorN {
+                    $($field: self.$field - scalar),+
+                }
+            }
+        }
+
         impl std::ops::Sub<$VectorN> for $VectorN {
             type Output = $VectorN;
 

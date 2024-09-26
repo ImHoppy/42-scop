@@ -41,6 +41,38 @@ impl Matrix4 {
         Matrix4 { x, y, z, w }
     }
 }
+impl std::ops::Mul<f32> for Matrix4 {
+    type Output = Matrix4;
+
+    fn mul(self, scalar: f32) -> Self::Output {
+        Matrix4 {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+            w: self.w * scalar,
+        }
+    }
+}
+
+impl std::ops::Mul<Matrix4> for Matrix4 {
+    type Output = Matrix4;
+
+    fn mul(self, scalar: Matrix4) -> Self::Output {
+        let a = self[0];
+        let b = self[1];
+        let c = self[2];
+        let d = self[3];
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        Matrix4::from_cols(
+            a*scalar[0][0] + b*scalar[0][1] + c*scalar[0][2] + d*scalar[0][3],
+            a*scalar[1][0] + b*scalar[1][1] + c*scalar[1][2] + d*scalar[1][3],
+            a*scalar[2][0] + b*scalar[2][1] + c*scalar[2][2] + d*scalar[2][3],
+            a*scalar[3][0] + b*scalar[3][1] + c*scalar[3][2] + d*scalar[3][3],
+        )
+    }
+}
+
 impl std::ops::Index<usize> for Matrix4 {
     type Output = Vector4;
 
