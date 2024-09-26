@@ -4,8 +4,8 @@ mod device;
 mod math;
 mod pipeline;
 mod swapchain;
-mod vertex;
 mod textures;
+mod vertex;
 
 use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
@@ -244,7 +244,7 @@ impl App {
     unsafe fn update_uniform_buffer(&mut self, image_index: usize) -> Result<()> {
         let time = self.start.elapsed().as_secs_f32();
 
-        let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), 90.0 * time);
+        let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), 1.0 * time);
 
         let view = Mat4::look_at_rh(
             vec3(2.0, 2.0, 2.0),
@@ -252,12 +252,21 @@ impl App {
             vec3(0.0, 0.0, 1.0),
         );
 
-        let mut proj = perspective(
-            Deg(45.0),
-            self.data.swapchain_extent.width as f32 / self.data.swapchain_extent.height as f32,
-            0.1,
-            10.0,
+        #[rustfmt::skip]
+        let correction = Mat4::new(
+            1.0, 0.0,       0.0, 0.0,
+            0.0, 1.0,       0.0, 0.0,
+            0.0, 0.0, 1.0 / 2.0, 0.0,
+            0.0, 0.0, 1.0 / 2.0, 1.0,
         );
+
+        let proj = correction
+            * perspective(
+                Deg(45.0),
+                self.data.swapchain_extent.width as f32 / self.data.swapchain_extent.height as f32,
+                0.1,
+                10.0,
+            );
 
         let ubo = UniformBufferObject { model, view, proj };
 
