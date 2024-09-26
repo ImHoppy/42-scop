@@ -201,6 +201,12 @@ pub unsafe fn transition_image_layout(
 ) -> Result<()> {
     let (src_access_mask, dst_access_mask, src_stage_mask, dst_stage_mask) =
         match (old_layout, new_layout) {
+            (vk::ImageLayout::UNDEFINED, vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL) => (
+                vk::AccessFlags::empty(),
+                vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ | vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE,
+                vk::PipelineStageFlags::TOP_OF_PIPE,
+                vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS,
+            ),
             (vk::ImageLayout::UNDEFINED, vk::ImageLayout::TRANSFER_DST_OPTIMAL) => (
                 vk::AccessFlags::empty(),
                 vk::AccessFlags::TRANSFER_WRITE,
@@ -218,8 +224,19 @@ pub unsafe fn transition_image_layout(
 
     let command_buffer = begin_single_time_commands(device, data)?;
 
+    let aspect_mask = if new_layout == vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL {
+        match format {
+            vk::Format::D32_SFLOAT_S8_UINT | vk::Format::D24_UNORM_S8_UINT => {
+                vk::ImageAspectFlags::DEPTH | vk::ImageAspectFlags::STENCIL
+            }
+            _ => vk::ImageAspectFlags::DEPTH,
+        }
+    } else {
+        vk::ImageAspectFlags::COLOR
+    };
+
     let subresource = vk::ImageSubresourceRange::builder()
-        .aspect_mask(vk::ImageAspectFlags::COLOR)
+        .aspect_mask(aspect_mask)
         .base_mip_level(0)
         .level_count(1)
         .base_array_layer(0)

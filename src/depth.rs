@@ -3,7 +3,7 @@ use std::ptr::copy_nonoverlapping as memcpy;
 use vulkanalia::prelude::v1_2::*;
 
 use crate::{
-    textures::{create_image, create_image_view},
+    textures::{create_image, create_image_view, transition_image_layout},
     AppData,
 };
 
@@ -32,10 +32,19 @@ pub unsafe fn create_depth_objects(
     data.depth_image_view =
         create_image_view(device, depth_image, format, vk::ImageAspectFlags::DEPTH)?;
 
+    transition_image_layout(
+        device,
+        data,
+        data.depth_image,
+        format,
+        vk::ImageLayout::UNDEFINED,
+        vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    )?;
+
     Ok(())
 }
 
-unsafe fn get_depth_format(instance: &Instance, data: &AppData) -> Result<vk::Format> {
+pub unsafe fn get_depth_format(instance: &Instance, data: &AppData) -> Result<vk::Format> {
     let candidates = &[
         vk::Format::D32_SFLOAT,
         vk::Format::D32_SFLOAT_S8_UINT,
