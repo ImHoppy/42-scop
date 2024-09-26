@@ -1,8 +1,4 @@
-use crate::buffers;
-use crate::descriptor;
-use crate::pipeline;
-use crate::textures;
-use crate::{App, AppData};
+use crate::{buffers, depth, descriptor, pipeline, textures, App, AppData};
 
 use anyhow::{Ok, Result};
 use log::*;
@@ -23,6 +19,7 @@ impl App {
         create_swapchain_image_views(&self.device, &mut self.data)?;
         pipeline::create_render_pass(&self.instance, &self.device, &mut self.data)?;
         pipeline::create(&self.device, &mut self.data)?;
+        depth::create_depth_objects(&self.instance, &self.device, &mut self.data)?;
         buffers::create_framebuffers(&self.device, &mut self.data)?;
         descriptor::create_uniform_buffers(&self.instance, &self.device, &mut self.data)?;
         descriptor::create_descriptor_pool(&self.device, &mut self.data)?;
@@ -35,6 +32,11 @@ impl App {
     }
 
     pub unsafe fn destroy_swapchain(&mut self) {
+        // Image depth
+        self.device
+            .destroy_image_view(self.data.depth_image_view, None);
+        self.device.free_memory(self.data.depth_image_memory, None);
+        self.device.destroy_image(self.data.depth_image, None);
         // Destroy descriptor buffers
         self.device
             .destroy_descriptor_pool(self.data.descriptor_pool, None);
@@ -168,7 +170,12 @@ pub unsafe fn create_swapchain_image_views(device: &Device, data: &mut AppData) 
         .swapchain_images
         .iter()
         .map(|image| {
-            textures::create_image_view(device, *image, data.swapchain_format)
+            textures::create_image_view(
+                device,
+                *image,
+                data.swapchain_format,
+                vk::ImageAspectFlags::COLOR,
+            )
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok(())
