@@ -210,3 +210,21 @@ impl QueueFamilyIndices {
         }
     }
 }
+
+pub unsafe fn get_memory_type_index(
+    instance: &Instance,
+    data: &AppData,
+    properties: vk::MemoryPropertyFlags,
+    requirements: vk::MemoryRequirements,
+) -> Result<u32> {
+    let memory_properties = instance.get_physical_device_memory_properties(data.physical_device);
+
+    (0..memory_properties.memory_type_count)
+        .find(|i| {
+            let suitable = (requirements.memory_type_bits & (1 << i)) != 0;
+            let memory_type = memory_properties.memory_types[*i as usize];
+
+            suitable && memory_type.property_flags.contains(properties)
+        })
+        .ok_or_else(|| anyhow!("Failed to find suitable memory type."))
+}

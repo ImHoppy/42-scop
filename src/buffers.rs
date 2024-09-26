@@ -2,8 +2,8 @@ use anyhow::{Ok, Result};
 
 use vulkanalia::prelude::v1_2::*;
 
-use crate::device::QueueFamilyIndices;
-use crate::vertex::{get_memory_type_index, INDICES};
+use crate::device::{get_memory_type_index, QueueFamilyIndices};
+use crate::vertex::INDICES;
 use crate::{AppData, MAX_FRAMES_IN_FLIGHT};
 
 pub unsafe fn create_framebuffers(device: &Device, data: &mut AppData) -> Result<()> {

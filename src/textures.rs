@@ -5,7 +5,7 @@ use vulkanalia::prelude::v1_2::*;
 
 use crate::{
     buffers::{self, begin_single_time_commands, end_single_time_commands},
-    vertex::get_memory_type_index,
+    device::get_memory_type_index,
     AppData,
 };
 
@@ -95,7 +95,7 @@ pub unsafe fn create_texture_image_view(device: &Device, data: &mut AppData) -> 
     Ok(())
 }
 
-pub unsafe fn create_texture_sampler(device: &Device, data: &mut AppData, )->Result<()> {
+pub unsafe fn create_texture_sampler(device: &Device, data: &mut AppData) -> Result<()> {
     let info = vk::SamplerCreateInfo::builder()
         .mag_filter(vk::Filter::LINEAR)
         .min_filter(vk::Filter::LINEAR)
