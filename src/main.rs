@@ -115,9 +115,9 @@ impl App {
         pipeline::create_render_pass(&instance, &device, &mut data)?;
         descriptor::create_descriptor_set_layout(&device, &mut data)?;
         pipeline::create(&device, &mut data)?;
+        buffers::create_command_pool(&instance, &device, &mut data)?;
         depth::create_depth_objects(&instance, &device, &mut data)?;
         buffers::create_framebuffers(&device, &mut data)?;
-        buffers::create_command_pool(&instance, &device, &mut data)?;
         textures::create_texture_image(&instance, &device, &mut data)?;
         textures::create_texture_image_view(&device, &mut data)?;
         textures::create_texture_sampler(&device, &mut data)?;
