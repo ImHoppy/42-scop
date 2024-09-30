@@ -8,8 +8,6 @@ use std::str::SplitWhitespace;
 pub enum ObjError {
     OpenFileFailed,
     ParseFailed,
-    InvalidMaterialName,
-    InvalidObjectName,
     FaceParseError,
 
     FaceVertexOutOfBounds,
@@ -110,57 +108,6 @@ enum Face {
     Triangle(VertexIndices, VertexIndices, VertexIndices),
     Quad(VertexIndices, VertexIndices, VertexIndices, VertexIndices),
     Polygon(Vec<VertexIndices>),
-}
-
-pub fn load_mtl<F>(file_name: F) -> Result<(Vec<Material>, HashMap<String, usize>), ObjError>
-where
-    F: AsRef<Path> + std::fmt::Debug,
-{
-    let file = File::open(file_name.as_ref()).map_err(|error| {
-        log::error!("Failed to open file {:?} due to {}", file_name, error);
-        ObjError::OpenFileFailed
-    })?;
-    let reader = BufReader::new(file);
-
-    let mut materials = Vec::new();
-    let mut mat_map: HashMap<String, usize> = HashMap::new();
-    let mut current_mat: Option<Material> = None;
-
-    for line in reader.lines() {
-        let (line, mut words) = match line {
-            Ok(ref line) => (line.trim(), line.split_whitespace()),
-            Err(err) => {
-                log::error!("Failed to read line due to {}", err);
-                return Err(ObjError::ParseFailed);
-            }
-        };
-        match words.next() {
-            Some("#") | None => continue,
-            Some("mtllib") => {
-                if let Some(mat) = current_mat.to_owned() {
-                    mat_map.insert(mat.name.clone(), materials.len());
-                    materials.push(mat);
-                }
-                let mut mat = Material::default();
-                mat.name = line["mtllib".len()..].trim().to_owned();
-                if mat.name.is_empty() {
-                    return Err(ObjError::InvalidMaterialName);
-                }
-                current_mat = Some(mat);
-            }
-            Some(unknown) => {
-                if !unknown.is_empty() {
-                    let param = line[unknown.len()..].trim().to_owned();
-                    if let Some(ref mut mat) = current_mat {
-                        mat.unknown_param.insert(unknown.to_owned(), param);
-                    }
-                } else {
-                    log::warn!("Unknown line: {}", line);
-                }
-            }
-        }
-    }
-    Ok((materials, mat_map))
 }
 
 fn parse_vertex_data(
