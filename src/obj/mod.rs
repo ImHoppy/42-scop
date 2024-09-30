@@ -35,7 +35,6 @@ pub struct Mesh {
     pub normals: Vec<f32>,
     pub tex_coords: Vec<f32>,
     pub indices: Vec<u32>,
-    pub vertex_color: Vec<f32>,
     pub material_id: Option<usize>,
 }
 
@@ -296,6 +295,7 @@ where
                 return Err(ObjError::ParseFailed);
             }
         };
+
         match words.next() {
             Some("#") | None => continue,
             Some("v") => parse_vertex_data(&mut words, &mut current_pos, 3, line, "position"),
@@ -310,8 +310,9 @@ where
                     current_pos.len() / 3,
                     current_normals.len() / 3,
                     current_tex_coords.len() / 2,
-                ) {}
-                return Err(ObjError::FaceParseError);
+                ) {
+                    return Err(ObjError::FaceParseError);
+                }
             }
             Some("o") | Some("g") => {
                 if !current_faces.is_empty() {
@@ -341,5 +342,17 @@ where
             }
         }
     }
+
+    models.push(Model::new(
+        current_name,
+        export_faces(
+            &current_pos,
+            &current_tex_coords,
+            &current_normals,
+            &current_faces,
+            None,
+        )?,
+    ));
+
     Ok(models)
 }
