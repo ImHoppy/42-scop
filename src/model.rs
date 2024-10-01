@@ -3,11 +3,10 @@ use crate::vertex::Vertex;
 use crate::{obj, AppData};
 use anyhow::Result;
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
-use std::io::BufReader;
 
 pub fn load_model(data: &mut AppData) -> Result<()> {
     let models = obj::load_obj("./resources/texture_cube.obj")?;
+    let mut unique_vertices = HashMap::new();
 
     for model in &models {
         for index in &model.mesh.indices {
@@ -15,16 +14,16 @@ pub fn load_model(data: &mut AppData) -> Result<()> {
             let tex_coord_offset = (2 * index) as usize;
 
             let tex_coord = if model.mesh.tex_coords.len() > 0 {
-				vec2(
-					model.mesh.tex_coords[tex_coord_offset],
-					1.0 - model.mesh.tex_coords[tex_coord_offset + 1],
-				)
-			} else {
-				vec2(
-					model.mesh.positions[pos_offset],
-					model.mesh.positions[pos_offset + 1],
-				)
-			};
+                vec2(
+                    model.mesh.tex_coords[tex_coord_offset],
+                    1.0 - model.mesh.tex_coords[tex_coord_offset + 1],
+                )
+            } else {
+                vec2(
+                    model.mesh.positions[pos_offset],
+                    model.mesh.positions[pos_offset + 1],
+                )
+            };
 
             let vertex = Vertex {
                 pos: vec3(
@@ -35,8 +34,15 @@ pub fn load_model(data: &mut AppData) -> Result<()> {
                 color: vec3(1.0, 1.0, 1.0),
                 tex_coord,
             };
-            data.vertices.push(vertex);
-            data.indices.push(data.indices.len() as u32);
+
+            if let Some(index) = unique_vertices.get(&vertex) {
+                data.indices.push(*index as u32);
+            } else {
+                let index = data.vertices.len();
+                unique_vertices.insert(vertex, index);
+                data.vertices.push(vertex);
+                data.indices.push(index as u32);
+            }
         }
     }
 
