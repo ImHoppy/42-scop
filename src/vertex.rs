@@ -1,5 +1,5 @@
-use crate::math::{vec2, vec3, Vec2, Vec3};
-use anyhow::{anyhow, Ok, Result};
+use crate::math::{Vec2, Vec3};
+use anyhow::{Ok, Result};
 use vulkanalia::prelude::v1_2::*;
 
 use std::mem::size_of;
