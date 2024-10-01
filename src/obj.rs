@@ -16,6 +16,22 @@ pub enum ObjError {
     InvalidPolygon,
 }
 
+impl std::fmt::Display for ObjError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ObjError::OpenFileFailed => write!(f, "Failed to open file"),
+            ObjError::ParseFailed => write!(f, "Failed to parse file"),
+            ObjError::FaceParseError => write!(f, "Failed to parse face"),
+            ObjError::FaceVertexOutOfBounds => write!(f, "Face vertex out of bounds"),
+            ObjError::FaceTexCoordOutOfBounds => write!(f, "Face texture coordinate out of bounds"),
+            ObjError::FaceNormalOutOfBounds => write!(f, "Face normal out of bounds"),
+            ObjError::InvalidPolygon => write!(f, "Invalid polygon"),
+        }
+    }
+}
+
+impl std::error::Error for ObjError {}
+
 #[derive(Clone, Debug)]
 pub struct Model {
     pub name: String,
