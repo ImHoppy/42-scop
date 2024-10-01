@@ -14,6 +14,18 @@ pub fn load_model(data: &mut AppData) -> Result<()> {
             let pos_offset = (3 * index) as usize;
             let tex_coord_offset = (2 * index) as usize;
 
+            let tex_coord = if model.mesh.tex_coords.len() > 0 {
+				vec2(
+					model.mesh.tex_coords[tex_coord_offset],
+					1.0 - model.mesh.tex_coords[tex_coord_offset + 1],
+				)
+			} else {
+				vec2(
+					model.mesh.positions[pos_offset],
+					model.mesh.positions[pos_offset + 1],
+				)
+			};
+
             let vertex = Vertex {
                 pos: vec3(
                     model.mesh.positions[pos_offset],
@@ -21,10 +33,7 @@ pub fn load_model(data: &mut AppData) -> Result<()> {
                     model.mesh.positions[pos_offset + 2],
                 ),
                 color: vec3(1.0, 1.0, 1.0),
-                tex_coord: vec2(
-					model.mesh.tex_coords[tex_coord_offset],
-					1.0 - model.mesh.tex_coords[tex_coord_offset + 1],
-                ),
+                tex_coord,
             };
             data.vertices.push(vertex);
             data.indices.push(data.indices.len() as u32);

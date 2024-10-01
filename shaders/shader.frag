@@ -7,6 +7,14 @@ layout(location = 1) in vec2 fragTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
+const vec3 colors[4] = vec3[4](
+    vec3(0.05, 0.05, 0.05),
+    vec3(0.1, 0.1, 0.1),
+    vec3(0.15, 0.15, 0.15),
+    vec3(0.2, 0.2, 0.2)
+);
+
 void main() {
     outColor = texture(texSampler, fragTexCoord);
+    // outColor = vec4(colors[gl_PrimitiveID % 4], 1.0);
 }
