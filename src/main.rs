@@ -7,12 +7,15 @@ mod pipeline;
 mod swapchain;
 mod textures;
 mod vertex;
+mod obj;
+mod model;
 
 use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
 use device::{create_logical_device, pick_physical_device};
 use log::*;
 use math::{perspective, vec3, Deg};
+use vertex::Vertex;
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::mem::size_of;
@@ -121,6 +124,7 @@ impl App {
         textures::create_texture_image(&instance, &device, &mut data)?;
         textures::create_texture_image_view(&device, &mut data)?;
         textures::create_texture_sampler(&device, &mut data)?;
+        model::load_model(&mut data)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         vertex::create_index_buffer(&instance, &device, &mut data)?;
         descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
@@ -322,6 +326,8 @@ pub struct AppData {
     in_flight_fences: Vec<vk::Fence>,
     images_in_flight: Vec<vk::Fence>,
     // Vertex Buffer
+    vertices: Vec<Vertex>,
+    indices: Vec<u32>,
     vertex_buffer: vk::Buffer,
     vertex_buffer_memory: vk::DeviceMemory,
     index_buffer: vk::Buffer,

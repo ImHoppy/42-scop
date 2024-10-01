@@ -14,7 +14,7 @@ pub unsafe fn create_texture_image(
     device: &Device,
     data: &mut AppData,
 ) -> Result<()> {
-    let image = File::open("resources/orange_texture.png")?;
+    let image = File::open("./resources/orange_texture.png")?;
 
     let decoder = png::Decoder::new(image);
     let mut reader = decoder.read_info()?;

@@ -11,9 +11,9 @@ use crate::AppData;
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
-    pos: Vec3,
-    color: Vec3,
-    tex_coord: Vec2,
+    pub pos: Vec3,
+    pub color: Vec3,
+    pub tex_coord: Vec2,
 }
 
 impl Vertex {
@@ -57,31 +57,12 @@ impl Vertex {
     }
 }
 
-#[rustfmt::skip]
-pub static VERTICES: [Vertex; 8] = [
-    Vertex::new(vec3(-0.5,  -0.5, 0.0), vec3(1.0, 0.0, 0.0), vec2(1.0, 0.0)),
-    Vertex::new(vec3(0.5,  -0.5, 0.0), vec3(0.0, 1.0, 0.0), vec2(0.0, 0.0)),
-    Vertex::new(vec3(0.5,  0.5, 0.0), vec3(0.0, 0.0, 1.0), vec2(0.0, 1.0)),
-    Vertex::new(vec3(-0.5,  0.5, 0.0), vec3(1.0, 1.0, 1.0), vec2(1.0, 1.0)),
-
-    Vertex::new(vec3(-0.5,  -0.5, -0.5), vec3(1.0, 0.0, 0.0), vec2(1.0, 0.0)),
-    Vertex::new(vec3(0.5,  -0.5, -0.5), vec3(0.0, 1.0, 0.0), vec2(0.0, 0.0)),
-    Vertex::new(vec3(0.5,  0.5, -0.5), vec3(0.0, 0.0, 1.0), vec2(0.0, 1.0)),
-    Vertex::new(vec3(-0.5,  0.5, -0.5), vec3(1.0, 1.0, 1.0), vec2(1.0, 1.0)),
-];
-
-#[rustfmt::skip]
-pub const INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4
-];
-
 pub unsafe fn create_vertex_buffer(
     instance: &Instance,
     device: &Device,
     data: &mut AppData,
 ) -> Result<()> {
-    let size = (size_of::<Vertex>() * VERTICES.len()) as u64;
+    let size = (size_of::<Vertex>() * data.vertices.len()) as u64;
 
     let (staging_buffer, staging_memory) = create_buffer(
         instance,
@@ -94,7 +75,7 @@ pub unsafe fn create_vertex_buffer(
 
     let memory = device.map_memory(staging_memory, 0, size, vk::MemoryMapFlags::empty())?;
 
-    memcpy(VERTICES.as_ptr(), memory.cast(), VERTICES.len());
+    memcpy(data.vertices.as_ptr(), memory.cast(), data.vertices.len());
 
     device.unmap_memory(staging_memory);
 
@@ -122,7 +103,7 @@ pub unsafe fn create_index_buffer(
     device: &Device,
     data: &mut AppData,
 ) -> Result<()> {
-    let size = (size_of::<u16>() * INDICES.len()) as u64;
+    let size = (size_of::<u32>() * data.indices.len()) as u64;
 
     let (staging_buffer, staging_memory) = create_buffer(
         instance,
@@ -135,7 +116,7 @@ pub unsafe fn create_index_buffer(
 
     let memory = device.map_memory(staging_memory, 0, size, vk::MemoryMapFlags::empty())?;
 
-    memcpy(INDICES.as_ptr(), memory.cast(), INDICES.len());
+    memcpy(data.indices.as_ptr(), memory.cast(), data.indices.len());
 
     device.unmap_memory(staging_memory);
 
