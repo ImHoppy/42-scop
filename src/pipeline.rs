@@ -1,6 +1,5 @@
 use anyhow::{Ok, Result};
 
-use vk::PipelineBindPoint;
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::prelude::v1_2::*;
 

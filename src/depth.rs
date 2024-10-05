@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Result};
-use std::ptr::copy_nonoverlapping as memcpy;
 use vulkanalia::prelude::v1_2::*;
 
 use crate::{

@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use anyhow::{anyhow, Ok, Result};
+use anyhow::{Ok, Result};
 use vulkanalia::prelude::v1_2::*;
 
 use crate::{buffers::create_buffer, AppData};
