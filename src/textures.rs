@@ -85,6 +85,7 @@ pub unsafe fn create_texture_image(
         device,
         data,
         data.texture_image,
+        vk::Format::R8G8B8A8_SRGB,
         width,
         height,
         data.mip_levels,
@@ -264,7 +265,7 @@ pub unsafe fn create_texture_sampler(device: &Device, data: &mut AppData) -> Res
         .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
         .mip_lod_bias(0.0)
         .min_lod(0.0)
-        .max_lod(0.0);
+        .max_lod(data.mip_levels as f32);
 
     data.texture_sampler = device.create_sampler(&info, None)?;
 
