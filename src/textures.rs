@@ -101,10 +101,21 @@ pub unsafe fn generate_mipmaps(
     device: &Device,
     data: &AppData,
     image: vk::Image,
+    format: vk::Format,
     width: u32,
     height: u32,
     mip_levels: u32,
 ) -> Result<()> {
+    if !instance
+        .get_physical_device_format_properties(data.physical_device, format)
+        .optimal_tiling_features
+        .contains(vk::FormatFeatureFlags::SAMPLED_IMAGE_FILTER_LINEAR)
+    {
+        return Err(anyhow!(
+            "texture image format does not support linear blitting"
+        ));
+    }
+
     let command_buffer = begin_single_time_commands(device, data)?;
 
     let subresource = vk::ImageSubresourceRange::builder()
