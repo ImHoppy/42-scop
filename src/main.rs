@@ -3,25 +3,25 @@ mod depth;
 mod descriptor;
 mod device;
 mod math;
+mod model;
+mod obj;
 mod pipeline;
 mod swapchain;
 mod textures;
 mod vertex;
-mod obj;
-mod model;
 
 use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
 use device::{create_logical_device, pick_physical_device};
 use log::*;
 use math::{perspective, vec3, Deg};
-use vertex::Vertex;
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::mem::size_of;
 use std::os::raw::c_void;
 use std::ptr::copy_nonoverlapping as memcpy;
 use std::time::Instant;
+use vertex::Vertex;
 
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
@@ -250,12 +250,12 @@ impl App {
     unsafe fn update_uniform_buffer(&mut self, image_index: usize) -> Result<()> {
         let time = self.start.elapsed().as_secs_f32();
 
-        let model = Mat4::from_axis_angle(vec3(0.0, 0.0, 1.0), 1.0 * time);
+        let model = Mat4::from_axis_angle(vec3(0.0, 1.0, 0.0), 1.0 * time);
 
         let view = Mat4::look_at_rh(
             vec3(2.0, 2.0, 2.0),
             vec3(0.0, 0.0, 0.0),
-            vec3(0.0, 0.0, 1.0),
+            vec3(0.0, 1.0, 0.0),
         );
 
         #[rustfmt::skip]
