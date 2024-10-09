@@ -175,6 +175,7 @@ pub unsafe fn create_swapchain_image_views(device: &Device, data: &mut AppData) 
                 *image,
                 data.swapchain_format,
                 vk::ImageAspectFlags::COLOR,
+                1,
             )
         })
         .collect::<Result<Vec<_>, _>>()?;

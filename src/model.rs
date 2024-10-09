@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 pub fn load_model(data: &mut AppData) -> Result<()> {
     let models = obj::load_obj("./resources/texture_cube.obj")?;
+
     let mut unique_vertices = HashMap::new();
 
     for model in &models {
