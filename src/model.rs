@@ -21,8 +21,8 @@ pub fn load_model(data: &mut AppData, obj_path: String) -> Result<()> {
                 )
             } else {
                 vec2(
-                    model.mesh.positions[pos_offset],
                     model.mesh.positions[pos_offset + 1],
+                    model.mesh.positions[pos_offset + 2],
                 )
             };
 

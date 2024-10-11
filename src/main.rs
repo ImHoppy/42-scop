@@ -330,10 +330,17 @@ impl App {
     unsafe fn update_uniform_buffer(&mut self, image_index: usize) -> Result<()> {
         let time = self.start.elapsed().as_secs_f32();
 
+        let num_vertices = self.data.vertices.len() as u32;
+        let mut sum = Vec3::default();
+        for vertex in &self.data.vertices {
+            sum += vertex.pos;
+        }
+        sum /= num_vertices as f32;
+
         let model = Mat4::from_axis_angle(
             vec3(0.0, 1.0, 0.0),
             if self.controls.auto_rotate { time } else { 1.0 },
-        );
+        ) * Mat4::from_translation(-sum);
 
         let theta_x = self.controls.rotation.x * (std::f32::consts::PI / 180.0);
         let theta_y = self.controls.rotation.y * (std::f32::consts::PI / 180.0);
@@ -345,18 +352,7 @@ impl App {
             radius * theta_x.sin() * theta_y.sin() + 0.1,
         );
 
-        let num_vertices = self.data.vertices.len() as u32;
-        let mut sum = Vec3::default();
-        for vertex in &self.data.vertices {
-            sum += vertex.pos;
-        }
-        sum /= num_vertices as f32;
-
-        let view = Mat4::look_at_rh(
-            camera,
-            sum,
-            vec3(0.0, 1.0, 0.0),
-        );
+        let view = Mat4::look_at_rh(camera, sum, vec3(0.0, 1.0, 0.0));
 
         #[rustfmt::skip]
         let correction = Mat4::new(

@@ -15,7 +15,6 @@ const vec3 colors[4] = vec3[4](
 );
 
 void main() {
-    // outColor = vec4(fragColor, 1.0);
     outColor = texture(texSampler, fragTexCoord) * vec4(fragColor, 1.0);
     // outColor = vec4(colors[gl_PrimitiveID % 4], 1.0);
 }

@@ -118,6 +118,16 @@ macro_rules! impl_vector {
             }
         }
 
+        impl std::ops::Neg for $VectorN {
+            type Output = $VectorN;
+
+            fn neg(self) -> Self::Output {
+                $VectorN {
+                    $($field: -self.$field),+
+                }
+            }
+        }
+
         // Assignment operators
 
         impl std::ops::AddAssign<$VectorN> for $VectorN {
@@ -150,6 +160,7 @@ macro_rules! impl_vector {
             }
         }
 
+        // Conversion
         impl std::convert::AsRef<[f32; $VectorNFieldsCount]> for $VectorN {
             fn as_ref(&self) -> &[f32; $VectorNFieldsCount] {
                 unsafe { std::mem::transmute(self) }
@@ -161,6 +172,8 @@ macro_rules! impl_vector {
                 unsafe { std::mem::transmute(self) }
             }
         }
+
+        // Indexing
 
         impl std::ops::Index<usize> for $VectorN {
             type Output = f32;

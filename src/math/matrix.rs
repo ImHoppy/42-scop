@@ -174,4 +174,14 @@ impl Matrix4 {
             0.0, 0.0, 0.0, 1.0,
         )
     }
+
+    pub fn from_translation(translation: Vector3) -> Matrix4 {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        Matrix4::new(
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            translation.x, translation.y, translation.z, 1.0,
+        )
+    }
 }
