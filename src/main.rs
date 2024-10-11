@@ -345,10 +345,16 @@ impl App {
             radius * theta_x.sin() * theta_y.sin() + 0.1,
         );
 
+        let num_vertices = self.data.vertices.len() as u32;
+        let mut sum = Vec3::default();
+        for vertex in &self.data.vertices {
+            sum += vertex.pos;
+        }
+        sum /= num_vertices as f32;
+
         let view = Mat4::look_at_rh(
             camera,
-            // vec3(1.0, 20.0, 1.0),
-            vec3(0.0, 0.0, 0.0),
+            sum,
             vec3(0.0, 1.0, 0.0),
         );
 
