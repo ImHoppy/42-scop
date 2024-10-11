@@ -147,4 +147,31 @@ impl Matrix4 {
     pub fn look_at_rh(eye: Vector3, center: Vector3, up: Vector3) -> Matrix4 {
         Matrix4::look_to_rh(eye, center - eye, up)
     }
+
+    /// Creates a matrix that rotates around the x-axis. Theta is in radians.
+    pub fn from_angle_x(theta: f32) -> Matrix4 {
+        let c = f32::cos(theta);
+        let s = f32::sin(theta);
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        Matrix4::new(
+            1.0, 0.0, 0.0, 0.0,
+            0.0, c, s, 0.0,
+            0.0, -s, c, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        )
+    }
+    /// Creates a matrix that rotates around the y-axis. Theta is in radians.
+    pub fn from_angle_y(theta: f32) -> Matrix4 {
+        let c = f32::cos(theta);
+        let s = f32::sin(theta);
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        Matrix4::new(
+            c, 0.0, -s, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            s, 0.0, c, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        )
+    }
 }
