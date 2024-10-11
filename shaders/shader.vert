@@ -13,8 +13,12 @@ layout(location = 2) in vec2 inTexCoord;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
+const vec3 LIGHT_DIRECTION = normalize(vec3(1.0, -3.0, -1.0));
+
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-    fragColor = inColor;
+    vec3 normal = normalize(mat3(transpose(inverse(ubo.model))) * inPosition);
+    float intensity = dot(normal, -LIGHT_DIRECTION);
+    fragColor = clamp(intensity, 0.5, 1.0) * inColor;
     fragTexCoord = inTexCoord;
 }
