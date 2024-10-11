@@ -118,6 +118,38 @@ macro_rules! impl_vector {
             }
         }
 
+        // Assignment operators
+
+        impl std::ops::AddAssign<$VectorN> for $VectorN {
+            fn add_assign(&mut self, other: $VectorN) {
+                $(self.$field += other.$field;)+
+            }
+        }
+
+        impl std::ops::SubAssign<$VectorN> for $VectorN {
+            fn sub_assign(&mut self, other: $VectorN) {
+                $(self.$field -= other.$field;)+
+            }
+        }
+
+        impl std::ops::MulAssign<$VectorN> for $VectorN {
+            fn mul_assign(&mut self, other: $VectorN) {
+                $(self.$field *= other.$field;)+
+            }
+        }
+
+        impl std::ops::DivAssign<$VectorN> for $VectorN {
+            fn div_assign(&mut self, other: $VectorN) {
+                $(self.$field /= other.$field;)+
+            }
+        }
+
+        impl std::ops::DivAssign<f32> for $VectorN {
+            fn div_assign(&mut self, other: f32) {
+                $(self.$field /= other;)+
+            }
+        }
+
         impl std::convert::AsRef<[f32; $VectorNFieldsCount]> for $VectorN {
             fn as_ref(&self) -> &[f32; $VectorNFieldsCount] {
                 unsafe { std::mem::transmute(self) }

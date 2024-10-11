@@ -4,8 +4,8 @@ use crate::{obj, AppData};
 use anyhow::Result;
 use std::collections::HashMap;
 
-pub fn load_model(data: &mut AppData) -> Result<()> {
-    let models = obj::load_obj("./resources/texture_cube.obj")?;
+pub fn load_model(data: &mut AppData, obj_path: String) -> Result<()> {
+    let models = obj::load_obj(obj_path)?;
 
     let mut unique_vertices = HashMap::new();
 

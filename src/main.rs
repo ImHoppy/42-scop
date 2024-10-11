@@ -47,6 +47,13 @@ pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
 fn main() -> Result<()> {
     pretty_env_logger::init();
 
+    let obj_path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| String::from("./resources/texture_cube.obj"));
+    let texture_path = std::env::args()
+        .nth(2)
+        .unwrap_or_else(|| String::from("./resources/orange_texture.png"));
+
     // Window
 
     let event_loop = EventLoop::new()?;
@@ -57,7 +64,7 @@ fn main() -> Result<()> {
 
     // App
 
-    let mut app = unsafe { App::create(&window)? };
+    let mut app = unsafe { App::create(&window, obj_path, texture_path)? };
     let mut minimized = false;
 
     event_loop.run(move |event, elwt| {
@@ -103,7 +110,7 @@ fn main() -> Result<()> {
                     if button == MouseButton::Left {
                         app.controls.mouse_pressed = state == ElementState::Pressed;
                     }
-                },
+                }
                 WindowEvent::CursorMoved { position, .. } => {
                     if app.controls.mouse_pressed {
                         let delta_x = position.x as f32 - app.controls.last_mouse_pos.x;
@@ -113,7 +120,7 @@ fn main() -> Result<()> {
                     }
                     app.controls.last_mouse_pos.x = position.x as f32;
                     app.controls.last_mouse_pos.y = position.y as f32;
-                },
+                }
                 WindowEvent::KeyboardInput { event, .. } => match event {
                     KeyEvent {
                         logical_key: Key::Character(c),
@@ -172,7 +179,7 @@ pub struct App {
 
 impl App {
     /// Creates our Vulkan app.
-    unsafe fn create(window: &Window) -> Result<Self> {
+    unsafe fn create(window: &Window, obj_path: String, texture_path: String) -> Result<Self> {
         let loader = LibloadingLoader::new(LIBRARY)?;
         let entry = Entry::new(loader).map_err(|err| anyhow!(err))?;
         let mut data = AppData::default();
@@ -188,10 +195,10 @@ impl App {
         buffers::create_command_pool(&instance, &device, &mut data)?;
         depth::create_depth_objects(&instance, &device, &mut data)?;
         buffers::create_framebuffers(&device, &mut data)?;
-        textures::create_texture_image(&instance, &device, &mut data)?;
+        textures::create_texture_image(&instance, &device, &mut data, texture_path)?;
         textures::create_texture_image_view(&device, &mut data)?;
         textures::create_texture_sampler(&device, &mut data)?;
-        model::load_model(&mut data)?;
+        model::load_model(&mut data, obj_path)?;
         vertex::create_vertex_buffer(&instance, &device, &mut data)?;
         vertex::create_index_buffer(&instance, &device, &mut data)?;
         descriptor::create_uniform_buffers(&instance, &device, &mut data)?;
