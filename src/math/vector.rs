@@ -1,12 +1,12 @@
 #[repr(C)]
-#[derive(Copy, PartialEq, Clone, Debug)]
+#[derive(Copy, PartialEq, Clone, Debug, Default)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
 }
 
 #[repr(C)]
-#[derive(Copy, PartialEq, Clone, Debug)]
+#[derive(Copy, PartialEq, Clone, Debug, Default)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -14,7 +14,7 @@ pub struct Vector3 {
 }
 
 #[repr(C)]
-#[derive(Copy, PartialEq, Clone, Debug)]
+#[derive(Copy, PartialEq, Clone, Debug, Default)]
 pub struct Vector4 {
     pub x: f32,
     pub y: f32,
