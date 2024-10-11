@@ -25,7 +25,7 @@ use vertex::Vertex;
 use winit::keyboard::Key;
 
 use winit::dpi::LogicalSize;
-use winit::event::{Event, KeyEvent, WindowEvent};
+use winit::event::{ElementState, Event, KeyEvent, MouseButton, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
@@ -99,6 +99,21 @@ fn main() -> Result<()> {
                         }
                     }
                 },
+                WindowEvent::MouseInput { state, button, .. } => {
+                    if button == MouseButton::Left {
+                        app.controls.mouse_pressed = state == ElementState::Pressed;
+                    }
+                },
+                WindowEvent::CursorMoved { position, .. } => {
+                    if app.controls.mouse_pressed {
+                        let delta_x = position.x as f32 - app.controls.last_mouse_pos.x;
+                        let delta_y = position.y as f32 - app.controls.last_mouse_pos.y;
+                        app.controls.rotation.x += delta_x as f32 * 0.1;
+                        app.controls.rotation.y += delta_y as f32 * 0.1;
+                    }
+                    app.controls.last_mouse_pos.x = position.x as f32;
+                    app.controls.last_mouse_pos.y = position.y as f32;
+                },
                 WindowEvent::KeyboardInput { event, .. } => match event {
                     KeyEvent {
                         logical_key: Key::Character(c),
@@ -138,6 +153,8 @@ struct Controls {
     zoom: f32,
     rotation: Vec2,
     auto_rotate: bool,
+    mouse_pressed: bool,
+    last_mouse_pos: Vec2,
 }
 
 /// Our Vulkan app.
@@ -194,6 +211,7 @@ impl App {
                 zoom: 1.0,
                 rotation: vec2(0.0, 45.0),
                 auto_rotate: false,
+                ..Default::default()
             },
         })
     }
