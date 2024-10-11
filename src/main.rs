@@ -109,7 +109,7 @@ fn main() -> Result<()> {
                         let delta_x = position.x as f32 - app.controls.last_mouse_pos.x;
                         let delta_y = position.y as f32 - app.controls.last_mouse_pos.y;
                         app.controls.rotation.x += delta_x as f32 * 0.1;
-                        app.controls.rotation.y += delta_y as f32 * 0.1;
+                        app.controls.rotation.y += delta_y as f32 * -0.1;
                     }
                     app.controls.last_mouse_pos.x = position.x as f32;
                     app.controls.last_mouse_pos.y = position.y as f32;
