@@ -14,7 +14,7 @@ use anyhow::{anyhow, Result};
 use descriptor::{Mat4, UniformBufferObject};
 use device::{create_logical_device, pick_physical_device};
 use log::*;
-use math::{perspective, vec3, Deg};
+use math::{perspective, vec2, vec3, Deg, Vec2, Vec3};
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::mem::size_of;
@@ -22,9 +22,10 @@ use std::os::raw::c_void;
 use std::ptr::copy_nonoverlapping as memcpy;
 use std::time::Instant;
 use vertex::Vertex;
+use winit::keyboard::Key;
 
 use winit::dpi::LogicalSize;
-use winit::event::{Event, WindowEvent};
+use winit::event::{Event, KeyEvent, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
 
@@ -58,6 +59,7 @@ fn main() -> Result<()> {
 
     let mut app = unsafe { App::create(&window)? };
     let mut minimized = false;
+
     event_loop.run(move |event, elwt| {
         match event {
             // Request a redraw when all events were processed.
@@ -82,6 +84,45 @@ fn main() -> Result<()> {
                         app.resized = true;
                     }
                 }
+                // Client input
+                WindowEvent::MouseWheel { delta, .. } => match delta {
+                    winit::event::MouseScrollDelta::LineDelta(_, y) => {
+                        let value = y as f32 * 0.1;
+                        if app.controls.zoom + value > 0.0 {
+                            app.controls.zoom += value;
+                        }
+                    }
+                    winit::event::MouseScrollDelta::PixelDelta(pos) => {
+                        let value = pos.y as f32 * 0.01;
+                        if app.controls.zoom + value > 0.0 {
+                            app.controls.zoom += value;
+                        }
+                    }
+                },
+                WindowEvent::KeyboardInput { event, .. } => match event {
+                    KeyEvent {
+                        logical_key: Key::Character(c),
+                        state,
+                        ..
+                    } => {
+                        if c == "w" {
+                            app.controls.rotation.y += 1.0
+                        }
+                        if c == "s" {
+                            app.controls.rotation.y -= 1.0
+                        }
+                        if c == "a" {
+                            app.controls.rotation.x -= 1.0
+                        }
+                        if c == "d" {
+                            app.controls.rotation.x += 1.0
+                        }
+                        if c == "r" && state.is_pressed() {
+                            app.controls.auto_rotate = !app.controls.auto_rotate
+                        }
+                    }
+                    _ => {}
+                },
                 _ => {}
             },
             _ => {}
@@ -89,6 +130,14 @@ fn main() -> Result<()> {
     })?;
 
     Ok(())
+}
+
+/// The controls for our Vulkan app.
+#[derive(Clone, Debug, Default)]
+struct Controls {
+    zoom: f32,
+    rotation: Vec2,
+    auto_rotate: bool,
 }
 
 /// Our Vulkan app.
@@ -101,6 +150,7 @@ pub struct App {
     frame: usize,
     resized: bool,
     start: Instant,
+    controls: Controls,
 }
 
 impl App {
@@ -140,6 +190,11 @@ impl App {
             frame: 0,
             resized: false,
             start: Instant::now(),
+            controls: Controls {
+                zoom: 1.0,
+                rotation: vec2(0.0, 45.0),
+                auto_rotate: false,
+            },
         })
     }
 
@@ -250,10 +305,24 @@ impl App {
     unsafe fn update_uniform_buffer(&mut self, image_index: usize) -> Result<()> {
         let time = self.start.elapsed().as_secs_f32();
 
-        let model = Mat4::from_axis_angle(vec3(0.0, 1.0, 0.0), 1.0 * time);
+        let model = Mat4::from_axis_angle(
+            vec3(0.0, 1.0, 0.0),
+            if self.controls.auto_rotate { time } else { 1.0 },
+        );
+
+        let theta_x = self.controls.rotation.x * (std::f32::consts::PI / 180.0);
+        let theta_y = self.controls.rotation.y * (std::f32::consts::PI / 180.0);
+        let radius: f32 = 20.0 * self.controls.zoom;
+
+        let camera: Vec3 = vec3(
+            radius * theta_x.cos() * theta_y.sin() + 0.1,
+            radius * theta_y.cos() + 0.1,
+            radius * theta_x.sin() * theta_y.sin() + 0.1,
+        );
 
         let view = Mat4::look_at_rh(
-            vec3(2.0, 2.0, 2.0),
+            camera,
+            // vec3(1.0, 20.0, 1.0),
             vec3(0.0, 0.0, 0.0),
             vec3(0.0, 1.0, 0.0),
         );
@@ -271,7 +340,7 @@ impl App {
                 Deg(45.0),
                 self.data.swapchain_extent.width as f32 / self.data.swapchain_extent.height as f32,
                 0.1,
-                10.0,
+                100.0,
             );
 
         let ubo = UniformBufferObject { model, view, proj };
