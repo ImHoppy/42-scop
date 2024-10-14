@@ -142,6 +142,12 @@ fn main() -> Result<()> {
                         if c == "r" && state.is_pressed() {
                             app.controls.auto_rotate = !app.controls.auto_rotate
                         }
+                        if c == "f" && state.is_pressed() {
+                            app.data.wireframe = !app.data.wireframe;
+                            unsafe {
+                                let _ = app.recreate_swapchain(&window);
+                            }
+                        }
                     }
                     _ => {}
                 },
@@ -443,6 +449,8 @@ pub struct AppData {
     depth_image: vk::Image,
     depth_image_memory: vk::DeviceMemory,
     depth_image_view: vk::ImageView,
+    // Rasterization parameters
+    wireframe: bool,
 }
 
 /// Creates a Vulkan instance.

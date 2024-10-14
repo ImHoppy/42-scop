@@ -59,7 +59,11 @@ pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
     let rasterization_state = vk::PipelineRasterizationStateCreateInfo::builder()
         .depth_clamp_enable(false)
         .rasterizer_discard_enable(false)
-        .polygon_mode(vk::PolygonMode::FILL)
+        .polygon_mode(if data.wireframe {
+            vk::PolygonMode::LINE
+        } else {
+            vk::PolygonMode::FILL
+        },)
         .line_width(1.0)
         .cull_mode(vk::CullModeFlags::BACK)
         .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
