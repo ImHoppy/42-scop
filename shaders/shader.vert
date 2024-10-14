@@ -12,6 +12,7 @@ layout(location = 2) in vec2 inTexCoord;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
+layout(location = 2) out uint fragID;
 
 const vec3 LIGHT_DIRECTION = normalize(vec3(1.0, -3.0, -1.0));
 
@@ -21,4 +22,5 @@ void main() {
     float intensity = dot(normal, -LIGHT_DIRECTION);
     fragColor = clamp(intensity, 0.2, 1.0) * inColor;
     fragTexCoord = inTexCoord;
+    fragID = gl_VertexIndex;
 }

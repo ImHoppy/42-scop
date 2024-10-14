@@ -99,8 +99,17 @@ pub unsafe fn create(device: &Device, data: &mut AppData) -> Result<()> {
 
     //
 
+    let frag_push_constant = vk::PushConstantRange::builder()
+        .stage_flags(vk::ShaderStageFlags::FRAGMENT)
+        .offset(0)
+        .size(std::mem::size_of::<u32>() as u32);
+
+    //
+    let constant_ranges = &[frag_push_constant];
     let set_layouts = &[data.descriptor_set_layout];
-    let layout_info = vk::PipelineLayoutCreateInfo::builder().set_layouts(set_layouts);
+    let layout_info = vk::PipelineLayoutCreateInfo::builder()
+        .push_constant_ranges(constant_ranges)
+        .set_layouts(set_layouts);
 
     data.pipeline_layout = device.create_pipeline_layout(&layout_info, None)?;
 

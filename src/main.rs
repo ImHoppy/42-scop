@@ -143,6 +143,12 @@ fn main() -> Result<()> {
                             let _ = app.recreate_swapchain(&window);
                         }
                     }
+                    (Key::Character("c"), ElementState::Pressed) => {
+                        app.data.color_mod = !app.data.color_mod;
+                        unsafe {
+                            let _ = app.recreate_swapchain(&window);
+                        }
+                    }
                     _ => {}
                 },
                 _ => {}
@@ -445,6 +451,7 @@ pub struct AppData {
     depth_image_view: vk::ImageView,
     // Rasterization parameters
     wireframe: bool,
+    color_mod: bool,
 }
 
 /// Creates a Vulkan instance.
