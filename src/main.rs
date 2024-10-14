@@ -121,32 +121,26 @@ fn main() -> Result<()> {
                     app.controls.last_mouse_pos.x = position.x as f32;
                     app.controls.last_mouse_pos.y = position.y as f32;
                 }
-                WindowEvent::KeyboardInput { event, .. } => match event {
-                    KeyEvent {
-                        logical_key: Key::Character(c),
-                        state,
-                        ..
-                    } => {
-                        if c == "w" {
-                            app.controls.rotation.y += 1.0
-                        }
-                        if c == "s" {
-                            app.controls.rotation.y -= 1.0
-                        }
-                        if c == "a" {
-                            app.controls.rotation.x -= 1.0
-                        }
-                        if c == "d" {
-                            app.controls.rotation.x += 1.0
-                        }
-                        if c == "r" && state.is_pressed() {
-                            app.controls.auto_rotate = !app.controls.auto_rotate
-                        }
-                        if c == "f" && state.is_pressed() {
-                            app.data.wireframe = !app.data.wireframe;
-                            unsafe {
-                                let _ = app.recreate_swapchain(&window);
-                            }
+                WindowEvent::KeyboardInput {
+                    event:
+                        KeyEvent {
+                            logical_key: key,
+                            state,
+                            ..
+                        },
+                    ..
+                } => match (key.as_ref(), state) {
+                    (Key::Character("w"), ElementState::Pressed) => app.controls.rotation.y += 1.0,
+                    (Key::Character("s"), ElementState::Pressed) => app.controls.rotation.y -= 1.0,
+                    (Key::Character("a"), ElementState::Pressed) => app.controls.rotation.x -= 1.0,
+                    (Key::Character("d"), ElementState::Pressed) => app.controls.rotation.x += 1.0,
+                    (Key::Character("r"), ElementState::Pressed) => {
+                        app.controls.auto_rotate = !app.controls.auto_rotate
+                    }
+                    (Key::Character("f"), ElementState::Pressed) => {
+                        app.data.wireframe = !app.data.wireframe;
+                        unsafe {
+                            let _ = app.recreate_swapchain(&window);
                         }
                     }
                     _ => {}
