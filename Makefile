@@ -15,7 +15,7 @@ endef
 SHADER_FILES	:= $(filter-out /header/,$(wildcard $(SHADERS_DIR)/*.vert $(SHADERS_DIR)/*.frag))
 SHADER_OUTPUTS	:= $(call outpath,spv,$(SHADER_FILES)) $(call outpath,spvasm,$(SHADER_FILES))
 
-all: build $(SHADER_OUTPUTS)
+all: $(SHADER_OUTPUTS) build
 
 build:
 	cargo build $(cargo_flags)
