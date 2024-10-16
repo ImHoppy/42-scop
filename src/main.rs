@@ -130,10 +130,24 @@ fn main() -> Result<()> {
                         },
                     ..
                 } => match (key.as_ref(), state) {
-                    (Key::Character("w"), ElementState::Pressed) => app.controls.rotation.y += 1.0,
-                    (Key::Character("s"), ElementState::Pressed) => app.controls.rotation.y -= 1.0,
-                    (Key::Character("a"), ElementState::Pressed) => app.controls.rotation.x -= 1.0,
-                    (Key::Character("d"), ElementState::Pressed) => app.controls.rotation.x += 1.0,
+                    (Key::Character("w"), ElementState::Pressed) => {
+                        app.controls.object_pos.z += 1.0
+                    }
+                    (Key::Character("s"), ElementState::Pressed) => {
+                        app.controls.object_pos.z -= 1.0
+                    }
+                    (Key::Character("a"), ElementState::Pressed) => {
+                        app.controls.object_pos.x -= 1.0
+                    }
+                    (Key::Character("d"), ElementState::Pressed) => {
+                        app.controls.object_pos.x += 1.0
+                    }
+                    (Key::Character("q"), ElementState::Pressed) => {
+                        app.controls.object_pos.y -= 1.0
+                    }
+                    (Key::Character("e"), ElementState::Pressed) => {
+                        app.controls.object_pos.y += 1.0
+                    }
                     (Key::Character("r"), ElementState::Pressed) => {
                         app.controls.auto_rotate = !app.controls.auto_rotate
                     }
@@ -168,6 +182,7 @@ struct Controls {
     auto_rotate: bool,
     mouse_pressed: bool,
     last_mouse_pos: Vec2,
+    object_pos: Vec3,
 }
 
 /// Our Vulkan app.
@@ -343,10 +358,12 @@ impl App {
         }
         sum /= num_vertices as f32;
 
-        let model = Mat4::from_axis_angle(
-            vec3(0.0, 1.0, 0.0),
-            if self.controls.auto_rotate { time } else { 1.0 },
-        ) * Mat4::from_translation(-sum);
+        let model = Mat4::from_translation(-self.controls.object_pos)
+            * Mat4::from_axis_angle(
+                vec3(0.0, 1.0, 0.0),
+                if self.controls.auto_rotate { time } else { 1.0 },
+            )
+            * Mat4::from_translation(-sum);
 
         let theta_x = self.controls.rotation.x * (std::f32::consts::PI / 180.0);
         let theta_y = self.controls.rotation.y * (std::f32::consts::PI / 180.0);
